@@ -38,6 +38,11 @@ $pass    = $parts[1] ?? '';
 }
 }
 if (!hash_equals(API_USER, $user) || !hash_equals(API_PASS, $pass)) {
+logSystemEvent('warning', 'auth', 'AUTH_FAILED', 'Basic-Auth fehlgeschlagen', [
+'uri' => $_SERVER['REQUEST_URI'] ?? '',
+'method' => $_SERVER['REQUEST_METHOD'] ?? '',
+'user_provided' => $user !== '' ? substr($user, 0, 3) . '***' : '(leer)',
+]);
 header('WWW-Authenticate: Basic realm="Solar Weather Station"');
 sendJson(401, ['error' => 'Nicht autorisiert']);
 }

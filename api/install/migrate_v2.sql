@@ -1,11 +1,11 @@
 -- ============================================================
--- Solar WiFi Weather Station – Migration v2
+-- Solar WiFi Weather Station ï¿½ Migration v2
 -- Neue Struktur: stations, measurement_values, metric_definitions
 -- Bestehende measurements-Daten werden migriert.
 --
 -- REIHENFOLGE:
---   1. Dieses Skript in der Datenbank ausführen
---   2. Anschließend neue API v1 deployen
+--   1. Dieses Skript in der Datenbank ausfï¿½hren
+--   2. Anschlieï¿½end neue API v1 deployen
 -- ============================================================
 
 -- ----------------------------------------------------------
@@ -15,18 +15,18 @@ CREATE TABLE IF NOT EXISTS `stations` (
   `id`         INT UNSIGNED  NOT NULL AUTO_INCREMENT,
   `slug`       VARCHAR(64)   NOT NULL UNIQUE COMMENT 'URL-freundlicher Bezeichner (z.B. sws-garten)',
   `name`       VARCHAR(128)  NOT NULL DEFAULT 'SWS Station',
-  `api_key`    VARCHAR(64)   NULL     COMMENT 'Zukünftig: stationsspezifischer API-Key',
+  `api_key`    VARCHAR(64)   NULL     COMMENT 'Zukï¿½nftig: stationsspezifischer API-Key',
   `settings`   JSON          NULL     COMMENT 'Remote-Config: sleep_min, temp_corr, elevation, api_path',
   `created_at` TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `idx_slug` (`slug`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Standardstation anlegen (für bestehende Daten)
+-- Standardstation anlegen (fï¿½r bestehende Daten)
 INSERT IGNORE INTO `stations` (`id`, `slug`, `name`) VALUES (1, 'sws-main', 'SWS Hauptstation');
 
 -- ----------------------------------------------------------
--- 2. measurements – station_id + device_ts hinzufügen
+-- 2. measurements ï¿½ station_id + device_ts hinzufï¿½gen
 -- ----------------------------------------------------------
 ALTER TABLE `measurements`
   ADD COLUMN IF NOT EXISTS `station_id` INT UNSIGNED NOT NULL DEFAULT 1
@@ -51,16 +51,16 @@ CREATE TABLE IF NOT EXISTS `metric_definitions` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT IGNORE INTO `metric_definitions` (`metric_key`, `label`, `unit`, `display_order`, `chart_color`) VALUES
-  ('temperature',     'Temperatur Außen',  '°C',  1,  '#e15759'),
-  ('pool_temperature','Temperatur Wasser', '°C',  2,  '#4e79a7'),
+  ('temperature',     'Temperatur Auï¿½en',  'ï¿½C',  1,  '#e15759'),
+  ('pool_temperature','Temperatur Wasser', 'ï¿½C',  2,  '#4e79a7'),
   ('humidity',        'Luftfeuchte',       '%',   3,  '#59a14f'),
   ('rel_pressure',    'Luftdruck (rel.)',  'hPa', 4,  '#9c755f'),
   ('abs_pressure',    'Luftdruck (abs.)',  'hPa', 5,  '#bab0ac'),
   ('battery_pct',     'Batterie',          '%',   6,  '#f28e2b'),
   ('battery_volt',    'Spannung',          'V',   7,  '#edc948'),
   ('wifi_strength',   'WLAN',             'dBm',  8,  '#76b7b2'),
-  ('heat_index',      'Hitzeindex',        '°C',  9,  '#ff9da7'),
-  ('dewpoint',        'Taupunkt',          '°C',  10, '#b07aa1'),
+  ('heat_index',      'Hitzeindex',        'ï¿½C',  9,  '#ff9da7'),
+  ('dewpoint',        'Taupunkt',          'ï¿½C',  10, '#b07aa1'),
   ('trend_value',     'Drucktrend',       'hPa',  11, '#d37295');
 
 -- ----------------------------------------------------------
@@ -78,7 +78,7 @@ CREATE TABLE IF NOT EXISTS `measurement_values` (
 
 -- ----------------------------------------------------------
 -- 5. Bestehende Messdaten in measurement_values migrieren
---    (nur Felder die numerisch sind; Strings werden übersprungen)
+--    (nur Felder die numerisch sind; Strings werden ï¿½bersprungen)
 -- ----------------------------------------------------------
 INSERT IGNORE INTO `measurement_values` (`measurement_id`, `metric_key`, `value`)
   SELECT `id`, 'temperature',      `temperature`   FROM `measurements` WHERE `temperature`    IS NOT NULL;
@@ -147,21 +147,21 @@ CREATE TABLE IF NOT EXISTS `invite_codes` (
 
 -- ============================================================
 -- Migration abgeschlossen.
--- Alte Spalten in measurements können nach Verifikation
+-- Alte Spalten in measurements kï¿½nnen nach Verifikation
 -- mit ALTER TABLE measurements DROP COLUMN ... entfernt werden.
 -- ============================================================
 
 -- ----------------------------------------------------------
--- Bestehende users-Tabelle: role-Spalte nachrüsten (idempotent)
+-- Bestehende users-Tabelle: role-Spalte nachrï¿½sten (idempotent)
 -- ----------------------------------------------------------
 ALTER TABLE `users`
   ADD COLUMN IF NOT EXISTS `role` ENUM('user','admin') NOT NULL DEFAULT 'user' AFTER `password`;
 
 -- ----------------------------------------------------------
--- Nachträgliche Korrekturen (idempotent ausführbar)
+-- Nachtrï¿½gliche Korrekturen (idempotent ausfï¿½hrbar)
 -- ----------------------------------------------------------
 -- value-Spalte auf VARCHAR erweitern damit String-Metriken
--- (pressure_state, zambretti, trend) gespeichert werden können.
+-- (pressure_state, zambretti, trend) gespeichert werden kï¿½nnen.
 ALTER TABLE `measurement_values`
   MODIFY COLUMN `value` VARCHAR(255) NOT NULL;
 
@@ -188,9 +188,9 @@ ALTER TABLE `measurements`
   MODIFY COLUMN `dewpoint_spread` DECIMAL(5,2) NULL;
 
 -- ----------------------------------------------------------
--- Migration v2.2 – role-Spalte in users (idempotent)
--- Bestehende Installationen: role-Spalte nachträglich hinzufügen.
--- Bereits vorhandene Admins müssen danach im Admin-Dashboard
+-- Migration v2.2 ï¿½ role-Spalte in users (idempotent)
+-- Bestehende Installationen: role-Spalte nachtrï¿½glich hinzufï¿½gen.
+-- Bereits vorhandene Admins mï¿½ssen danach im Admin-Dashboard
 -- auf role='admin' gesetzt werden.
 -- ----------------------------------------------------------
 ALTER TABLE `users`
@@ -198,7 +198,7 @@ ALTER TABLE `users`
   AFTER `password`;
 
 -- ----------------------------------------------------------
--- Migration v2.3 – Remote-Config: settings-Spalte in stations (idempotent)
+-- Migration v2.3 ï¿½ Remote-Config: settings-Spalte in stations (idempotent)
 -- ----------------------------------------------------------
 ALTER TABLE `stations`
   ADD COLUMN IF NOT EXISTS `settings` JSON NULL
@@ -222,4 +222,29 @@ CREATE TABLE IF NOT EXISTS `station_errors` (
   CONSTRAINT `fk_errors_station`
     FOREIGN KEY (`station_id`) REFERENCES `stations` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------
+-- Migration v2.4 â€“ system_log Tabelle fÃ¼r API-Level-Logging
+-- Loggt: Auth-Fehler, unbekannte Stationen, DB-Fehler, 404-Routen
+-- ----------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `system_log` (
+  `id`         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `level`      ENUM('error','warning','info') NOT NULL DEFAULT 'error'
+                 COMMENT 'Schweregrad',
+  `source`     VARCHAR(32)     NOT NULL DEFAULT 'api'
+                 COMMENT 'Quelle: api, auth, db, station, router',
+  `code`       VARCHAR(64)     NOT NULL
+                 COMMENT 'Maschinenlesbarer Kurzcode',
+  `message`    VARCHAR(512)    NOT NULL DEFAULT ''
+                 COMMENT 'Menschenlesbare Beschreibung',
+  `context`    JSON            NULL
+                 COMMENT 'Zusatzdaten als JSON',
+  `ip`         VARCHAR(45)     NULL
+                 COMMENT 'Client-IP-Adresse',
+  `created_at` TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_level_created` (`level`, `created_at`),
+  KEY `idx_source_created` (`source`, `created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='API- und System-Ereignisse (Auth-Fehler, unbekannte Stationen, DB-Probleme, etc.)';
 

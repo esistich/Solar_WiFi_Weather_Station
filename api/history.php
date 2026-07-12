@@ -13,6 +13,9 @@ $db      = getDb();
 $slug    = $_GET['station'] ?? null;
 $station = resolveStation($db, $slug);
 if (!$station) {
+	logSystemEvent('warning', 'station', 'UNKNOWN_STATION_HISTORY', "Unbekannte Station '$slug' via GET /history", [
+		'slug' => $slug ?? '(kein)',
+	]);
 	sendJson(404, ['error' => 'Station nicht gefunden']);
 }
 

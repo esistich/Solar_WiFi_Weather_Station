@@ -112,14 +112,13 @@ async function loadStations() {
       if (r.battery_pct !== null && r.battery_pct !== undefined && Number(r.battery_pct) < 20) lowBat++;
     });
     summary.innerHTML = `
-      <div class="sws-summary-card sws-summary-ok"><div class="sws-summary-icon mif-stack"></div><div class="sws-summary-num">${rows.length}</div><div class="sws-summary-label">Stationen</div></div>
-      <div class="sws-summary-card sws-summary-ok"><div class="sws-summary-icon mif-checkmark"></div><div class="sws-summary-num">${online}</div><div class="sws-summary-label">Online</div></div>
-      <div class="sws-summary-card ${warn?'sws-summary-warn':'sws-summary-ok'}"><div class="sws-summary-icon mif-hour-glass"></div><div class="sws-summary-num">${warn}</div><div class="sws-summary-label">Verzögert</div></div>
-      <div class="sws-summary-card ${offline?'sws-summary-err':'sws-summary-ok'}"><div class="sws-summary-icon mif-cross"></div><div class="sws-summary-num">${offline}</div><div class="sws-summary-label">Offline</div></div>
-      <div class="sws-summary-card ${lowBat?'sws-summary-err':'sws-summary-ok'}"><div class="sws-summary-icon mif-battery-empty"></div><div class="sws-summary-num">${lowBat}</div><div class="sws-summary-label">Akku &lt;20%</div></div>`;
+      <div class="sws-summary-card sws-summary-ok"><div class="sws-summary-num">${rows.length}</div><div class="sws-summary-label">Stationen</div></div>
+      <div class="sws-summary-card sws-summary-ok"><div class="sws-summary-num">${online}</div><div class="sws-summary-label">Online</div></div>
+      <div class="sws-summary-card ${warn?'sws-summary-warn':'sws-summary-ok'}"><div class="sws-summary-num">${warn}</div><div class="sws-summary-label">Verzögert</div></div>
+      <div class="sws-summary-card ${offline?'sws-summary-err':'sws-summary-ok'}"><div class="sws-summary-num">${offline}</div><div class="sws-summary-label">Offline</div></div>
+      <div class="sws-summary-card ${lowBat?'sws-summary-err':'sws-summary-ok'}"><div class="sws-summary-num">${lowBat}</div><div class="sws-summary-label">Akku &lt;20%</div></div>`;
   }
   updateRefreshTime();
-  if (viewMode === 'cards') renderStationCards(rows);
 }
 
 function batteryBadge(pct) {
@@ -140,57 +139,6 @@ function lastErrorBadge(r) {
   if (!r.last_error_code) return '<span class="fg-secondary">\u2013</span>';
   const cls = r.last_error_level === 'error' ? 'badge-error' : r.last_error_level === 'warning' ? 'badge-warning' : 'badge-info';
   return `<span class="badge ${cls}" title="${fmtTs(r.last_error_at)}">${r.last_error_code}</span>`;
-}
-
-let viewMode = 'table';
-function toggleStationView() {
-  viewMode = viewMode === 'table' ? 'cards' : 'table';
-  document.getElementById('stations-table').style.display = viewMode === 'table' ? '' : 'none';
-  document.getElementById('stations-cards').style.display = viewMode === 'cards' ? '' : 'none';
-  const btn = document.getElementById('btn-view-toggle');
-  if (btn) btn.innerHTML = viewMode === 'cards' ? '<span class="mif-list"></span>' : '<span class="mif-apps"></span>';
-  if (viewMode === 'cards') loadStations();
-}
-
-function renderStationCards(rows) {
-  const el = document.getElementById('stations-cards');
-  if (!rows.length) { el.innerHTML = '<p class="fg-secondary">Keine Stationen.</p>'; return; }
-
-  el.innerHTML = rows.map(r => {
-    const temp = r.temperature ? Number(r.temperature).toFixed(1) + '°C' : '\u2013';
-    const bat = r.battery_pct !== null && r.battery_pct !== undefined ? Number(r.battery_pct) : null;
-    const batCls = bat === null ? '' : bat < 20 ? 'sws-battery-low' : bat < 40 ? 'sws-battery-mid' : 'sws-battery-ok';
-    const wifi = r.wifi_strength !== null && r.wifi_strength !== undefined ? Number(r.wifi_strength) : null;
-    const wifiCls = wifi === null ? '' : wifi < -85 ? 'sws-wifi-weak' : wifi < -75 ? 'sws-wifi-mid' : 'sws-wifi-good';
-    const wifiBars = wifi === null ? 0 : wifi < -90 ? 1 : wifi < -80 ? 2 : wifi < -70 ? 3 : 4;
-
-    return `<div class="sws-station-card">
-      <div class="sws-station-card-header">
-        ${stationStatus(r)}
-        <span class="sws-station-name">${r.name}</span>
-        <span class="sws-station-slug">${r.slug}</span>
-      </div>
-      <div class="sws-station-card-body">
-        <div class="sws-station-metric"><div class="val">${temp}</div><div class="lbl">Temperatur</div></div>
-        <div class="sws-station-metric"><div class="val">${r.meas_24h ?? 0}</div><div class="lbl">Messungen 24h</div></div>
-        <div class="sws-station-metric">
-          ${bat !== null ? `<div class="val">${bat}%</div><div class="sws-battery-bar"><div class="sws-battery-bar-fill ${batCls}" style="width:${bat}%"></div></div>` : '<div class="val">\u2013</div>'}
-          <div class="lbl">Batterie</div>
-        </div>
-        <div class="sws-station-metric">
-          <div class="val">${wifi !== null ? wifi+' dBm' : '\u2013'}</div>
-          <div class="sws-wifi-bars ${wifiCls}">${[1,2,3,4].map(i => `<div class="sws-wifi-bar" style="height:${i*4}px${i<=wifiBars?'':'44'};background:${i<=wifiBars?'':'#555'}"></div>`).join('')}</div>
-          <div class="lbl">WLAN</div>
-        </div>
-      </div>
-      <div class="sws-station-card-footer">
-        <span class="sws-last-seen"><span class="mif-clock"></span> ${fmtTs(r.last_seen)}</span>
-        ${r.fw_version ? `<span><span class="mif-embed2"></span> v${r.fw_version}</span>` : ''}
-        ${r.last_error_code ? `<span class="badge badge-error" title="${fmtTs(r.last_error_at)}">${r.last_error_code}</span>` : ''}
-        <span><button class="btn-edit" onclick="editStation(${r.id},'${r.slug.replace(/'/g,"\\'")}','${r.name.replace(/'/g,"\\'")}','${r.mac??''}','${encodeURIComponent(JSON.stringify(r.settings??{}))}')">Bearbeiten</button></span>
-      </div>
-    </div>`;
-  }).join('');
 }
 
 function openAddStation() {
@@ -570,10 +518,13 @@ async function loadHistory() {
                 });
               });
 
-                // ---- Rohdaten-Tabelle (alle Metriken) ----
+                // ---- Rohdaten-Tabelle (alle Metriken) – AUSSERHALB des Grids ----  
+                // Alte Raw-Tabelle entfernen
+                document.querySelectorAll('.sws-history-raw').forEach(el => el.remove());
+
                 const raw = await api(`rawdata&station=${encodeURIComponent(slug)}&hours=${hours}`);
                 if (!raw || raw.error) {
-                  grid.insertAdjacentHTML('beforeend', `<p class="fg-secondary">${raw?.error ?? 'Rohdaten konnten nicht geladen werden'}</p>`);
+                  grid.insertAdjacentHTML('afterend', `<p class="fg-secondary">${raw?.error ?? 'Rohdaten konnten nicht geladen werden'}</p>`);
                   return;
                 }
 
@@ -586,6 +537,7 @@ async function loadHistory() {
                         <thead><tr>
                           <th>Zeitpunkt</th>
                           ${colKeys.map(k => '<th>' + k + '</th>').join('')}
+                          <th class="sws-raw-actions">Aktion</th>
                         </tr></thead>
                         <tbody>
                           ${raw.rows.map(row =>
@@ -593,6 +545,7 @@ async function loadHistory() {
                             new Date(row.ts + 'Z').toLocaleString('de-DE', { timeZone: 'Europe/Berlin', day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' }) +
                             '</td>' +
                             colKeys.map(k => '<td>' + (row[k] !== undefined ? row[k] : '\u2013') + '</td>').join('') +
+                            '<td class="sws-raw-actions"><button class="btn-del" onclick="deleteMeasurement(' + row._mid + ')" title="Messung l\u00f6schen">\u2716</button></td>' +
                             '</tr>'
                           ).join('')}
                         </tbody>
@@ -600,8 +553,16 @@ async function loadHistory() {
                     </div>
                   </div>`;
 
-                grid.insertAdjacentHTML('beforeend', tableHtml);
+                grid.insertAdjacentHTML('afterend', tableHtml);
               }
+
+async function deleteMeasurement(mid) {
+  if (!confirm('Messung #' + mid + ' wirklich l\u00f6schen?\\nAlle Messwerte dieses Zeitpunkts werden entfernt.')) return;
+  const res = await api('rawdata&id=' + mid, 'DELETE');
+  if (res && res.ok) {
+    loadHistory();
+  }
+}
 
 document.getElementById('history-station')?.addEventListener('change', loadHistory);
 document.getElementById('history-hours')?.addEventListener('change', loadHistory);
@@ -683,12 +644,9 @@ async function loadLogStats() {
 
   let html = `<div class="sws-info-grid">`;
 
-  // Period lesbar machen
-  const periodLabel = data.period.replace('DAY','Tage').replace('HOUR','Stunden');
-
   // Stationsfehler
   html += `<div class="sws-info-card">
-    <h4><span class="mif-warning"></span> Stationsfehler (${periodLabel})</h4>
+    <h4><span class="mif-warning"></span> Stationsfehler (${data.period})</h4>
     <p style="font-size:1.5rem;font-weight:700;margin:4px 0">${data.station_errors.total}</p>`;
   if (data.station_errors.by_level.length) {
     html += data.station_errors.by_level.map(l => `<span class="badge ${badgeClass(l.level)}">${l.level}: ${l.cnt}</span> `).join('');
@@ -700,7 +658,7 @@ async function loadLogStats() {
 
   // System-Log
   html += `<div class="sws-info-card">
-    <h4><span class="mif-cog"></span> System-Ereignisse (${periodLabel})</h4>
+    <h4><span class="mif-cog"></span> System-Ereignisse (${data.period})</h4>
     <p style="font-size:1.5rem;font-weight:700;margin:4px 0">${data.system_log.total}</p>`;
   if (data.system_log.by_source.length) {
     html += data.system_log.by_source.map(l => `<span class="badge badge-${l.source}">${l.source}: ${l.cnt}</span> `).join('');
@@ -755,8 +713,7 @@ document.getElementById('cred-form')?.addEventListener('submit', async e => {
 async function loadSystemLog() {
   const level  = document.getElementById('syslog-level')?.value  ?? '';
   const source = document.getElementById('syslog-source')?.value ?? '';
-  const params = new URLSearchParams();
-  params.set('action', 'api/systemlog');
+  const params = new URLSearchParams({ action: 'api/systemlog' });
   if (level)  params.set('level',  level);
   if (source) params.set('source', source);
 
@@ -791,8 +748,7 @@ async function loadSystemLog() {
 async function loadErrorLog() {
   const level   = document.getElementById('err-level')?.value   ?? '';
   const station = document.getElementById('err-station')?.value ?? '';
-  const params  = new URLSearchParams();
-  params.set('action', 'api/errorlog');
+  const params  = new URLSearchParams({ action: 'api/errorlog' });
   if (level)   params.set('level',   level);
   if (station) params.set('station', station);
 

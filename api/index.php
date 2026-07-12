@@ -28,7 +28,7 @@ if ($uri === '/' || $uri === '/index.php') {
 
 // ── Admin-Routen → admin.php ─────────────────────────────────────────
 // /admin, /admin/, /  (ohne query) → Admin-Dashboard
-if ($uri === '/admin' || $uri === '/admin/' || $uri === '/' || $uri === '') {
+if ($uri === '/admin' || $uri === '/admin/' || $uri === '/' || $uri === '' || $uri === '/index.php') {
 	require __DIR__ . '/admin.php';
 	exit;
 }
@@ -65,5 +65,8 @@ if (isset($routes[$key]) && file_exists($routes[$key])) {
 }
 
 // ── 404 ──────────────────────────────────────────────────────────────
+logSystemEvent('warning', 'router', 'ROUTE_404', "Unbekannte Route: $method $uri", [
+	'query' => $_SERVER['QUERY_STRING'] ?? '',
+]);
 http_response_code(404);
 echo json_encode(['error' => "Unbekannte Route: $method $uri"], JSON_UNESCAPED_UNICODE);

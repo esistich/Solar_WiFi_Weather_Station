@@ -28,6 +28,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 	$slug    = $_GET['station'] ?? null;
 	$station = resolveStation($db, $slug);
 	if (!$station) {
+		logSystemEvent('warning', 'station', 'UNKNOWN_STATION_GET', "Unbekannte Station '$slug' via GET /data", [
+			'slug' => $slug ?? '(kein)',
+		]);
 		sendJson(404, ['error' => 'Station nicht gefunden']);
 	}
 
@@ -71,6 +74,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	$body = is_array($raw) ? $raw : null;
 
 	if (!$body) {
+		logSystemEvent('warning', 'api', 'INVALID_JSON', 'POST /data mit ungültigem JSON-Body', [
+			'content_type' => $_SERVER['CONTENT_TYPE'] ?? '(kein)',
+		]);
 		sendJson(400, ['error' => 'Ungültiger JSON-Body']);
 	}
 
@@ -87,9 +93,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			$db->prepare('INSERT INTO stations (slug, name, mac) VALUES (?, ?, ?)')
 			   ->execute([$autoSlug, $name, $mac]);
 			$station = ['id' => (int)$db->lastInsertId(), 'slug' => $autoSlug, 'name' => $name, 'mac' => $mac];
+
+			logSystemEvent('info', 'station', 'STATION_AUTO_CREATED', "Neue Station '$autoSlug' per MAC $mac automatisch angelegt", [
+				'mac' => $mac,
+				'slug' => $autoSlug,
+			]);
 		} elseif ($slug) {
+			logSystemEvent('warning', 'station', 'UNKNOWN_STATION', "Unbekannte Station '$slug' versuchte Daten zu senden", [
+				'slug' => $slug,
+				'body_keys' => array_keys($body),
+			]);
 			sendJson(404, ['error' => "Station '$slug' nicht gefunden"]);
 		} else {
+			logSystemEvent('warning', 'station', 'NO_STATION_ID', 'POST /data ohne device_mac oder station_slug', [
+				'body_keys' => array_keys($body),
+			]);
 			sendJson(400, ['error' => 'device_mac oder station_slug erforderlich']);
 		}
 	}
@@ -97,9 +115,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	$deviceTs = isset($body['device_ts']) ? (int)$body['device_ts'] : null;
 
 	// Messung anlegen
-	$stmt = $db->prepare('INSERT INTO measurements (station_id, device_ts) VALUES (?, FROM_UNIXTIME(?))');
-	$stmt->execute([$station['id'], $deviceTs]);
-	$measId = (int)$db->lastInsertId();
+	try {
+		$stmt = $db->prepare('INSERT INTO measurements (station_id, device_ts) VALUES (?, FROM_UNIXTIME(?))');
+		$stmt->execute([$station['id'], $deviceTs]);
+		$measId = (int)$db->lastInsertId();
+	} catch (\Throwable $e) {
+		logSystemEvent('error', 'db', 'DB_INSERT_FAILED', 'Messung konnte nicht gespeichert werden: ' . $e->getMessage(), [
+			'station_id' => $station['id'],
+			'station' => $station['slug'],
+		]);
+		sendJson(500, ['error' => 'Datenbankfehler beim Speichern']);
+	}
 
 	// Reservierte Keys die keine Metriken sind, plus Felder die die API jetzt selbst berechnet
 	$skip = [
@@ -143,11 +169,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			$stmtMeta->execute([$key, $label, $unit]);
 		} catch (Throwable $e) {
 			$errors[] = "meta[$key]: " . $e->getMessage();
+			logSystemEvent('error', 'db', 'DB_META_FAILED', "Metrik-Definition '$key' konnte nicht gespeichert werden", [
+				'error' => $e->getMessage(),
+				'station' => $station['slug'],
+			]);
 		}
 		try {
 			$stmtVal->execute([$measId, $key, is_numeric($val) ? (string)(float)$val : (string)$val]);
 		} catch (Throwable $e) {
 			$errors[] = "val[$key]: " . $e->getMessage();
+			logSystemEvent('error', 'db', 'DB_VAL_FAILED', "Messwert '$key' konnte nicht gespeichert werden", [
+				'error' => $e->getMessage(),
+				'station' => $station['slug'],
+			]);
 		}
 	}
 

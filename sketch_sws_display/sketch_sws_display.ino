@@ -644,6 +644,7 @@ void setup() {
     display.displayText(clockText, PA_CENTER, 0, 0, PA_PRINT);
     dispState    = STATE_CLOCK;
     stateStartMs = millis();
+}
 
 // =============================================================
 //  loop()

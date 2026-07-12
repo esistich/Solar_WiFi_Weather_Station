@@ -18,9 +18,7 @@ $excludeNames = @(
     "*_diag.php",
     "diag.php",
     ".setup_done",
-    "*.bin",
-    ".gitkeep",
-    "firmware.bin"
+    ".gitkeep"
 )
 # Zielordner anlegen falls nicht vorhanden
 if (-not (Test-Path $dest)) {
@@ -48,9 +46,10 @@ if ($file.Name -like $pattern) { $skip = $true; break }
 }
 }
 
-	# firmware/-Unterordner: nur .bin und .gitkeep ausschliessen,
-	# version.txt, .htaccess und Ordnerstruktur werden benoetigt damit die Hardware den richtigen Pfad findet
-	if ($file.FullName -match [regex]::Escape("ota\firmware\") -and $file.Name -notin @("version.txt", ".htaccess")) {
+	# firmware/-Unterordner: .bin-Dateien werden für OTA benötigt.
+	# version.txt und .htaccess sind ebenfalls nötig.
+	# .gitkeep wird ausgeschlossen.
+	if ($file.FullName -match [regex]::Escape("ota\firmware\") -and $file.Name -eq ".gitkeep") {
 		$skip = $true
 	}
 

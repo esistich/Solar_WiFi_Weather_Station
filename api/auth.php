@@ -20,7 +20,12 @@ if ($uri === 'auth/login' && $method === 'POST') {
 	$stmt = $db->prepare('SELECT id, email, password FROM users WHERE email = ? LIMIT 1');
 	$stmt->execute([$email]);
 	$user = $stmt->fetch();
-	if (!$user || !password_verify($pass, $user['password'])) sendJson(401, ['error' => 'Ungültige Anmeldedaten']);
+	if (!$user || !password_verify($pass, $user['password'])) {
+		logSystemEvent('warning', 'auth', 'LOGIN_FAILED', 'App-Login fehlgeschlagen', [
+			'email' => substr($email, 0, 3) . '***',
+		]);
+		sendJson(401, ['error' => 'Ungültige Anmeldedaten']);
+	}
 
 	sendJson(200, ['id' => (string)$user['id'], 'email' => $user['email'], 'token' => jwtEncode(['sub' => $user['id'], 'email' => $user['email']])]);
 }

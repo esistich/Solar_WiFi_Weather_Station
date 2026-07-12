@@ -5,7 +5,7 @@
   Authors: Keith Hungerford, Debasish Dutta and Marc Stähli
   Website : www.opengreenenergy.com */
 
-const String Version = "2.7.2";
+const String Version = "2.7.6";
 
 // =====================================================================
 // Compile-Zeit-Fallbacks für alle Laufzeit-Einstellungen

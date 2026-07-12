@@ -31,14 +31,26 @@ match (true) {
 			$rows = $pdo->query(
 				'SELECT s.id, s.slug, s.name, s.mac, s.settings, s.created_at,'
 				. ' m.created_at AS last_seen,'
-				. ' mv.value AS fw_version'
+				. ' mv_fw.value AS fw_version,'
+				. ' mv_bat.value AS battery_pct,'
+				. ' mv_wifi.value AS wifi_strength,'
+				. ' mv_temp.value AS temperature,'
+				. ' se.code AS last_error_code,'
+				. ' se.created_at AS last_error_at,'
+				. ' se.level AS last_error_level,'
+				. ' (SELECT COUNT(*) FROM measurements WHERE station_id = s.id AND created_at >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 24 HOUR)) AS meas_24h'
 				. ' FROM stations s'
 				. ' LEFT JOIN measurements m ON m.id = (SELECT id FROM measurements WHERE station_id = s.id ORDER BY id DESC LIMIT 1)'
-				. ' LEFT JOIN measurement_values mv ON mv.measurement_id = m.id AND mv.metric_key = \'fw_version\''
+				. ' LEFT JOIN measurement_values mv_fw ON mv_fw.measurement_id = m.id AND mv_fw.metric_key = \'fw_version\''
+				. ' LEFT JOIN measurement_values mv_bat ON mv_bat.measurement_id = m.id AND mv_bat.metric_key = \'battery_pct\''
+				. ' LEFT JOIN measurement_values mv_wifi ON mv_wifi.measurement_id = m.id AND mv_wifi.metric_key = \'wifi_strength\''
+				. ' LEFT JOIN measurement_values mv_temp ON mv_temp.measurement_id = m.id AND mv_temp.metric_key = \'temperature\''
+				. ' LEFT JOIN station_errors se ON se.id = (SELECT id FROM station_errors WHERE station_id = s.id ORDER BY id DESC LIMIT 1)'
 				. ' ORDER BY s.id'
 			)->fetchAll();
 			foreach ($rows as &$row) {
 				$row['settings'] = isset($row['settings']) ? (json_decode($row['settings'], true) ?? new stdClass()) : new stdClass();
+				$row['meas_24h'] = (int)$row['meas_24h'];
 			}
 			adminJson(200, $rows);
 		} catch (\Throwable $e) {
@@ -292,6 +304,28 @@ match (true) {
 		adminJson(200, $rows);
 	})(),
 
+	// GET api/systemlog
+	$sub === 'systemlog' && $method === 'GET' => (function () use ($pdo) {
+		$level  = trim($_GET['level'] ?? '');
+		$source = trim($_GET['source'] ?? '');
+		$code   = trim($_GET['code'] ?? '');
+		$limit  = min((int)($_GET['limit'] ?? 100), 500);
+		$where = []; $bind = [];
+		if (in_array($level, ['error', 'warning', 'info'], true)) { $where[] = 'level = ?'; $bind[] = $level; }
+		if ($source !== '') { $where[] = 'source = ?'; $bind[] = $source; }
+		if ($code   !== '') { $where[] = 'code = ?';   $bind[] = $code;   }
+		$sql = 'SELECT id, level, source, code, message, context, ip, created_at FROM system_log'
+			. ($where ? ' WHERE ' . implode(' AND ', $where) : '')
+			. ' ORDER BY id DESC LIMIT ' . $limit;
+		$st = $pdo->prepare($sql); $st->execute($bind);
+		$rows = $st->fetchAll();
+		foreach ($rows as &$r) {
+			if ($r['context'] !== null) $r['context'] = json_decode($r['context'], true);
+			$r['id'] = (int)$r['id'];
+		}
+		adminJson(200, $rows);
+	})(),
+
 	// GET api/ota
 	$sub === 'ota' && $method === 'GET' => (function () {
 		$base = __DIR__ . '/ota/firmware';
@@ -354,6 +388,98 @@ match (true) {
 			}
 		}
 		adminJson(200, ['ok' => true, 'log' => $log]);
+	})(),
+
+	// GET api/rawdata?station=slug&hours=24
+	$sub === 'rawdata' && $method === 'GET' => (function () use ($pdo) {
+		$slug  = trim($_GET['station'] ?? '');
+		$hours = min(720, max(1, (int)($_GET['hours'] ?? 24)));
+		if ($slug) { $st = $pdo->prepare('SELECT id FROM stations WHERE slug=?'); $st->execute([$slug]); $stationId = (int)($st->fetchColumn() ?: 0); }
+		else       { $stationId = (int)($pdo->query('SELECT id FROM stations ORDER BY id LIMIT 1')->fetchColumn() ?: 0); }
+		if (!$stationId) adminJson(404, ['error' => 'Station nicht gefunden']);
+
+		$keysStmt = $pdo->prepare('SELECT DISTINCT mv.metric_key FROM measurement_values mv JOIN measurements m ON m.id = mv.measurement_id WHERE m.station_id = ? AND m.created_at >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL ? HOUR) ORDER BY mv.metric_key');
+		$keysStmt->execute([$stationId, $hours]);
+		$keys = $keysStmt->fetchAll(\PDO::FETCH_COLUMN);
+
+		$rowsStmt = $pdo->prepare('SELECT m.id AS mid, m.created_at AS ts, mv.metric_key, mv.value FROM measurements m JOIN measurement_values mv ON mv.measurement_id = m.id WHERE m.station_id = ? AND m.created_at >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL ? HOUR) ORDER BY m.created_at ASC');
+		$rowsStmt->execute([$stationId, $hours]);
+		$raw = $rowsStmt->fetchAll();
+
+		$pivot = [];
+		foreach ($raw as $r) {
+			$ts = $r['ts'];
+			$mid = (int)$r['mid'];
+			if (!isset($pivot[$ts])) $pivot[$ts] = ['ts' => $ts, '_mid' => $mid];
+			$pivot[$ts][$r['metric_key']] = is_numeric($r['value']) ? round((float)$r['value'], 2) : $r['value'];
+		}
+
+		adminJson(200, ['station' => $slug ?: 'default', 'hours' => $hours, 'keys' => $keys, 'rows' => array_values($pivot)]);
+	})(),
+
+	// DELETE api/rawdata?id=123 – einzelne Messung löschen
+	$sub === 'rawdata' && $method === 'DELETE' => (function () use ($pdo) {
+		$id = (int)($_GET['id'] ?? 0);
+		if ($id <= 0) adminJson(400, ['error' => 'id erforderlich']);
+		// Erst Values, dann Measurement löschen
+		$pdo->prepare('DELETE FROM measurement_values WHERE measurement_id = ?')->execute([$id]);
+		$pdo->prepare('DELETE FROM measurements WHERE id = ?')->execute([$id]);
+		logSystemEvent('info', 'api', 'MEASUREMENT_DELETED', "Messung #$id manuell gelöscht via Admin");
+		adminJson(200, ['ok' => true, 'id' => $id]);
+	})(),
+
+	// GET api/serverinfo
+	$sub === 'serverinfo' && $method === 'GET' => (function () use ($pdo) {
+		$dbVersion = $pdo->query('SELECT VERSION()')->fetchColumn();
+		$tableSizes = [];
+		foreach (['measurements', 'measurement_values', 'station_errors', 'system_log'] as $tbl) {
+			try { $tableSizes[$tbl] = (int)$pdo->query("SELECT COUNT(*) FROM `$tbl`")->fetchColumn(); }
+			catch (\Throwable $e) { $tableSizes[$tbl] = null; }
+		}
+		$stationCount = (int)$pdo->query('SELECT COUNT(*) FROM stations')->fetchColumn();
+		$userCount    = (int)$pdo->query('SELECT COUNT(*) FROM users')->fetchColumn();
+		$diskFree     = function_exists('disk_free_space') ? round(disk_free_space(__DIR__) / 1024 / 1024, 1) : null;
+		$diskTotal    = function_exists('disk_total_space') ? round(disk_total_space(__DIR__) / 1024 / 1024, 1) : null;
+
+		adminJson(200, [
+			'php_version'    => PHP_VERSION,
+			'php_memory'     => ini_get('memory_limit'),
+			'php_max_exec'   => ini_get('max_execution_time') . 's',
+			'php_post_max'   => ini_get('post_max_size'),
+			'php_upload_max' => ini_get('upload_max_filesize'),
+			'db_version'     => $dbVersion,
+			'db_name'        => defined('DB_NAME') ? DB_NAME : '?',
+			'tables'         => array_merge($tableSizes, ['stations' => $stationCount, 'users' => $userCount]),
+			'disk_free_mb'   => $diskFree,
+			'disk_total_mb'  => $diskTotal,
+			'extensions'     => [
+				'pdo_mysql' => extension_loaded('pdo_mysql'),
+				'json'      => extension_loaded('json'),
+				'mbstring'  => extension_loaded('mbstring'),
+				'openssl'   => extension_loaded('openssl'),
+				'curl'      => extension_loaded('curl'),
+			],
+		]);
+	})(),
+
+	// GET api/logstats?days=7
+	$sub === 'logstats' && $method === 'GET' => (function () use ($pdo) {
+		$since = '24 HOUR';
+		if (!empty($_GET['days']) && is_numeric($_GET['days'])) {
+			$d = max(1, min(90, (int)$_GET['days']));
+			$since = "$d DAY";
+		}
+		$stErrTotal = $pdo->query("SELECT COUNT(*) FROM station_errors WHERE created_at >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL $since)")->fetchColumn();
+		$stErrByLevel = $pdo->query("SELECT level, COUNT(*) AS cnt FROM station_errors WHERE created_at >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL $since) GROUP BY level")->fetchAll();
+		$stErrByStation = $pdo->query("SELECT s.slug, COUNT(*) AS cnt FROM station_errors se JOIN stations s ON s.id = se.station_id WHERE se.created_at >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL $since) GROUP BY se.station_id ORDER BY cnt DESC")->fetchAll();
+		$sysTotal = $pdo->query("SELECT COUNT(*) FROM system_log WHERE created_at >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL $since)")->fetchColumn();
+		$sysBySource = $pdo->query("SELECT source, COUNT(*) AS cnt FROM system_log WHERE created_at >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL $since) GROUP BY source")->fetchAll();
+		$sysByLevel = $pdo->query("SELECT level, COUNT(*) AS cnt FROM system_log WHERE created_at >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL $since) GROUP BY level")->fetchAll();
+		adminJson(200, [
+			'period'         => $since,
+			'station_errors' => ['total' => (int)$stErrTotal, 'by_level' => $stErrByLevel, 'by_station' => $stErrByStation],
+			'system_log'     => ['total' => (int)$sysTotal, 'by_source' => $sysBySource, 'by_level' => $sysByLevel],
+		]);
 	})(),
 
 	default => adminJson(404, ['error' => "Unbekannte Admin-API: $sub"]),

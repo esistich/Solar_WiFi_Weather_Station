@@ -29,6 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	$body = is_array($raw) ? $raw : null;
 
 	if (!$body) {
+		logSystemEvent('warning', 'api', 'INVALID_JSON_LOG', 'POST /log mit ungültigem JSON-Body');
 		sendJson(400, ['error' => 'Ungültiger JSON-Body']);
 	}
 
@@ -37,6 +38,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	$mac     = normalizeMac($body['device_mac'] ?? null);
 	$station = resolveStation($db, $slug, $mac);
 	if (!$station) {
+		logSystemEvent('warning', 'station', 'UNKNOWN_STATION_LOG', 'Unbekannte Station versuchte Log-Eintrag zu senden', [
+			'slug' => $slug ?? '(kein)',
+			'mac' => $mac ?? '(kein)',
+			'code' => $code ?? '(kein)',
+		]);
 		sendJson(404, ['error' => 'Keine Station gefunden – device_mac oder station_slug erforderlich']);
 	}
 
@@ -72,6 +78,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 	$slug    = $_GET['station'] ?? null;
 	$station = resolveStation($db, $slug);
 	if (!$station) {
+		logSystemEvent('warning', 'station', 'UNKNOWN_STATION_LOG_GET', "Unbekannte Station '$slug' via GET /log", [
+			'slug' => $slug ?? '(kein)',
+		]);
 		sendJson(404, ['error' => 'Keine Station gefunden']);
 	}
 

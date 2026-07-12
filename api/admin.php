@@ -5,6 +5,13 @@
  */
 declare(strict_types=1);
 
+if (session_status() === PHP_SESSION_NONE) {
+	session_start();
+}
+
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Pragma: no-cache');
+
 // ── Logout ──────────────────────────────────────────────────────────
 if (($_GET['action'] ?? '') === 'logout') {
 	session_destroy();
@@ -36,6 +43,9 @@ if (($_GET['action'] ?? '') === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST'
 		header('Location: ' . dirname($_SERVER['SCRIPT_NAME']));
 		exit;
 	}
+	logSystemEvent('warning', 'auth', 'ADMIN_LOGIN_FAILED', 'Admin-Login fehlgeschlagen', [
+		'user' => substr($inputUser, 0, 3) . '***',
+	]);
 	$loginError = 'Benutzername oder Passwort falsch.';
 }
 
@@ -68,9 +78,10 @@ if (!$loggedIn):
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>SWS Admin – Login</title>
+<!-- v3.0-20260629 -->
 <link rel="stylesheet" href="https://cdn.metroui.org.ua/current/metro.css">
 <link rel="stylesheet" href="https://cdn.metroui.org.ua/current/icons.css">
-<link rel="stylesheet" href="admin.css">
+<link rel="stylesheet" href="admin_v2.css">
 </head>
 <body class="sws-login-page dark-side">
 <div class="sws-login-wrap">
@@ -115,7 +126,7 @@ $csrfToken = htmlspecialchars($_SESSION['csrf_token'] ?? '');
 <meta name="csrf-token" content="<?= $csrfToken ?>">
 <link rel="stylesheet" href="https://cdn.metroui.org.ua/current/metro.css">
 <link rel="stylesheet" href="https://cdn.metroui.org.ua/current/icons.css">
-<link rel="stylesheet" href="admin.css">
+<link rel="stylesheet" href="admin_v2.css">
 </head>
 <body class="sws-body dark-side">
 
@@ -126,11 +137,16 @@ $csrfToken = htmlspecialchars($_SESSION['csrf_token'] ?? '');
 	  <span>SWS Admin</span>
 	</div>
 	<ul class="sws-nav">
+	  <!-- v3.0-20260629 -->
 	  <li class="sws-nav-cat">Überwachung</li>
 	  <li><a href="#stations"    class="sws-nav-link active" data-section="stations">   <span class="mif-broadcast"></span>   Stationen</a></li>
 	  <li><a href="#live"        class="sws-nav-link"        data-section="live">       <span class="mif-pulse"></span>       Live-Daten</a></li>
 	  <li><a href="#history"     class="sws-nav-link"        data-section="history">    <span class="mif-chart-line"></span>  Historie</a></li>
 	  <li><a href="#errorlog"    class="sws-nav-link"        data-section="errorlog">   <span class="mif-warning"></span>     Fehler-Log</a></li>
+	  <li><a href="#systemlog"   class="sws-nav-link"        data-section="systemlog">  <span class="mif-cog"></span>         System-Log</a></li>
+	  <li><a href="#logstats"    class="sws-nav-link"        data-section="logstats">   <span class="mif-chart-pie"></span>  Log-Statistik</a></li>
+	  <li class="sws-nav-cat">Diagnose</li>
+	  <li><a href="#serverinfo"  class="sws-nav-link"        data-section="serverinfo"> <span class="mif-info"></span>        Server-Info</a></li>
 	  <li class="sws-nav-cat">Verwaltung</li>
 	  <li><a href="#users"       class="sws-nav-link"        data-section="users">      <span class="mif-users"></span>       Benutzer</a></li>
 	  <li><a href="#invites"     class="sws-nav-link"        data-section="invites">    <span class="mif-mail-forward"></span> Einladungen</a></li>
@@ -142,23 +158,28 @@ $csrfToken = htmlspecialchars($_SESSION['csrf_token'] ?? '');
 	  <li><a href="?action=logout" class="sws-nav-link sws-nav-logout"><span class="mif-exit"></span> Abmelden</a></li>
 	</ul>
   </nav>
+  <div class="sws-sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
 
   <div class="sws-content">
 	<div class="sws-appbar">
-	  <button class="sws-hamburger" id="nav-toggle" onclick="document.getElementById('sws-sidebar').classList.toggle('collapsed')">
+	  <button class="sws-hamburger" id="nav-toggle" onclick="toggleSidebar()">
 		<span class="mif-menu"></span>
 	  </button>
 	  <span id="sws-page-title" class="sws-appbar-title">Stationen</span>
+	  <span style="flex:1"></span>
+	  <span class="fg-secondary" style="font-size:.78rem">Aktualisiert: <span id="refresh-time">--:--:--</span></span>
 	</div>
 	<div class="sws-page-wrap">
 
 	  <section id="stations" class="sws-section">
 		<div class="sws-section-header">
 		  <h2 class="sws-section-title">Stationen</h2>
+		  <button id="btn-view-toggle" class="button secondary" onclick="toggleStationView()" title="Kachel-/Tabellenansicht"><span class="mif-apps"></span></button>
 		  <button class="button primary" onclick="openAddStation()"><span class="mif-plus"></span> Station hinzufügen</button>
 		</div>
 		<div id="stations-summary" class="sws-summary-row"></div>
 		<div id="stations-table"></div>
+		<div id="stations-cards" class="sws-station-grid" style="display:none"></div>
 	  </section>
 
 	  <section id="metrics" class="sws-section" style="display:none">
@@ -274,6 +295,40 @@ $csrfToken = htmlspecialchars($_SESSION['csrf_token'] ?? '');
 		<div id="errorlog-table"></div>
 	  </section>
 
+	  <section id="systemlog" class="sws-section" style="display:none">
+		<div class="sws-section-header">
+		  <h2 class="sws-section-title"><span class="mif-cog"></span> API- & Systemereignisse</h2>
+		</div>
+		<p class="remark">Zeigt Authentifizierungsfehler, unbekannte Stationen, DB-Probleme, 404-Anfragen und andere API-Ereignisse.</p>
+		<div class="sws-filter-bar">
+		  <select id="syslog-level" class="select" style="width:140px"><option value="">Alle Level</option><option value="error">error</option><option value="warning">warning</option><option value="info">info</option></select>
+		  <select id="syslog-source" class="select" style="width:150px"><option value="">Alle Quellen</option><option value="auth">auth</option><option value="station">station</option><option value="api">api</option><option value="db">db</option><option value="router">router</option></select>
+		  <button class="button secondary" onclick="loadSystemLog()"><span class="mif-refresh"></span> Aktualisieren</button>
+		</div>
+		<div id="systemlog-table"></div>
+	  </section>
+
+	  <section id="logstats" class="sws-section" style="display:none">
+		<div class="sws-section-header">
+		  <h2 class="sws-section-title"><span class="mif-chart-pie"></span> Log-Statistik</h2>
+		  <select id="logstats-days" class="select" style="width:140px" onchange="loadLogStats()">
+			<option value="1">Letzte 24 Stunden</option>
+			<option value="7" selected>Letzte 7 Tage</option>
+			<option value="30">Letzte 30 Tage</option>
+			<option value="90">Letzte 90 Tage</option>
+		  </select>
+		</div>
+		<p class="remark">Aggregierte Übersicht über Stationsfehler und System-Ereignisse.</p>
+		<div id="logstats-content"></div>
+	  </section>
+
+	  <section id="serverinfo" class="sws-section" style="display:none">
+		<div class="sws-section-header">
+		  <h2 class="sws-section-title"><span class="mif-info"></span> Server- &amp; System-Informationen</h2>
+		</div>
+		<div id="serverinfo-content"></div>
+	  </section>
+
 	  <section id="ota" class="sws-section" style="display:none">
 		<div class="sws-section-header">
 		  <h2 class="sws-section-title"><span class="mif-upload"></span> OTA-Firmware</h2>
@@ -347,6 +402,6 @@ $csrfToken = htmlspecialchars($_SESSION['csrf_token'] ?? '');
 <script src="https://cdn.metroui.org.ua/current/metro.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
-<script src="admin.js"></script>
+<script src="admin_v2.js"></script>
 </body>
 </html>

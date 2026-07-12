@@ -34,7 +34,12 @@ if ($method === 'PATCH') {
 	$stmt = $db->prepare('SELECT id, slug, name FROM stations WHERE slug = ? LIMIT 1');
 	$stmt->execute([$currentSlug]);
 	$station = $stmt->fetch();
-	if (!$station) sendJson(404, ['error' => "Station '$currentSlug' nicht gefunden"]);
+	if (!$station) {
+		logSystemEvent('warning', 'station', 'UNKNOWN_STATION_PATCH', "Unbekannte Station '$currentSlug' via PATCH /stations", [
+			'slug' => $currentSlug,
+		]);
+		sendJson(404, ['error' => "Station '$currentSlug' nicht gefunden"]);
+	}
 
 	if ($newSlug !== $station['slug']) {
 		$check = $db->prepare('SELECT id FROM stations WHERE slug = ? AND id != ? LIMIT 1');

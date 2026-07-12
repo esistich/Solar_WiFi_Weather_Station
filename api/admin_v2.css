@@ -43,18 +43,11 @@ body.sws-body{background:var(--body-background);color:var(--body-color);font-fam
 /* ===== Tables ===== */
 .sws-table-wrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse}
-th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--sws-border);vertical-align:middle}
-th{background:var(--card-header-background,#282c35);font-weight:600;color:var(--sws-text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em;position:sticky;top:0;z-index:1}
-tr:hover td{background:rgba(255,255,255,.03)}
-tr:nth-child(even) td{background:rgba(255,255,255,.015)}
-tr:nth-child(even):hover td{background:rgba(255,255,255,.04)}
+th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--sws-border);vertical-align:middle}
+th{background:var(--card-header-background,#282c35);font-weight:600;color:var(--sws-text-muted);font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+tr:hover td{background:var(--selected-row-background)}
 .sws-actions{display:flex;gap:6px}
 .sws-actions button{padding:3px 10px;font-size:12px}
-.btn-edit,.btn-del{padding:4px 12px;border-radius:4px;border:none;cursor:pointer;font-size:12px;transition:opacity .15s}
-.btn-edit{background:#0078d4;color:#fff}
-.btn-edit:hover{opacity:.85}
-.btn-del{background:transparent;color:#e74c3c;border:1px solid #e74c3c}
-.btn-del:hover{background:#e74c3c;color:#fff}
 
 /* ===== Badges ===== */
 .badge-error{background:#c0392b;color:#fff;border-radius:3px;padding:1px 6px;font-size:11px}
@@ -166,52 +159,13 @@ tr:nth-child(even):hover td{background:rgba(255,255,255,.04)}
 .sws-collapse .form-group:last-child{margin-bottom:12px}
 
 /* ===== Dashboard Summary Cards ===== */
-.sws-summary-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px}
-.sws-summary-card{background:var(--sws-bg-card);border:1px solid var(--sws-border);border-radius:10px;padding:16px 20px;min-width:140px;text-align:center;flex:1;transition:transform .15s,border-color .15s;position:relative;overflow:hidden}
-.sws-summary-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
-.sws-summary-card:hover{transform:translateY(-2px);border-color:var(--sws-accent)}
-.sws-summary-card .sws-summary-icon{font-size:24px;margin-bottom:6px;opacity:.8}
-.sws-summary-card .sws-summary-num{font-size:32px;font-weight:800;line-height:1.1;letter-spacing:-.5px}
-.sws-summary-card .sws-summary-label{font-size:11px;color:var(--sws-text-muted);margin-top:4px;text-transform:uppercase;letter-spacing:.08em}
+.sws-summary-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+.sws-summary-card{background:var(--sws-bg-card);border:1px solid var(--sws-border);border-radius:6px;padding:14px 18px;min-width:130px;text-align:center;flex:1}
+.sws-summary-card .sws-summary-num{font-size:28px;font-weight:700;line-height:1.1}
+.sws-summary-card .sws-summary-label{font-size:12px;color:var(--sws-text-muted);margin-top:4px}
 .sws-summary-ok .sws-summary-num{color:#27ae60}
-.sws-summary-ok::before{background:linear-gradient(90deg,#27ae60,#2ecc71)}
-.sws-summary-ok .sws-summary-icon{color:#27ae60}
 .sws-summary-warn .sws-summary-num{color:#f39c12}
-.sws-summary-warn::before{background:linear-gradient(90deg,#e67e22,#f39c12)}
-.sws-summary-warn .sws-summary-icon{color:#f39c12}
 .sws-summary-err .sws-summary-num{color:#e74c3c}
-.sws-summary-err::before{background:linear-gradient(90deg,#c0392b,#e74c3c)}
-.sws-summary-err .sws-summary-icon{color:#e74c3c}
-
-/* ===== Station Cards (alternative view) ===== */
-.sws-station-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin-bottom:20px}
-.sws-station-card{background:var(--sws-bg-card);border:1px solid var(--sws-border);border-radius:10px;padding:0;overflow:hidden;transition:border-color .2s}
-.sws-station-card:hover{border-color:var(--sws-accent)}
-.sws-station-card-header{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--sws-border);background:var(--card-header-background,#282c35)}
-.sws-station-card-header .sws-dot{font-size:12px}
-.sws-station-card-header .sws-station-name{font-weight:600;font-size:15px;color:var(--sws-text);flex:1}
-.sws-station-card-header .sws-station-slug{font-size:11px;color:var(--sws-text-muted);font-family:monospace}
-.sws-station-card-body{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:14px 16px}
-.sws-station-metric{text-align:center}
-.sws-station-metric .val{font-size:20px;font-weight:700;color:var(--sws-accent);line-height:1.2}
-.sws-station-metric .lbl{font-size:10px;color:var(--sws-text-muted);text-transform:uppercase;letter-spacing:.05em}
-.sws-station-card-footer{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-top:1px solid var(--sws-border);font-size:11px;color:var(--sws-text-muted)}
-.sws-station-card-footer .sws-last-seen{display:flex;align-items:center;gap:4px}
-
-/* Battery bar */
-.sws-battery-bar{width:60px;height:10px;background:#333;border-radius:5px;overflow:hidden;display:inline-block;vertical-align:middle}
-.sws-battery-bar-fill{height:100%;border-radius:5px;transition:width .3s}
-.sws-battery-low{background:#e74c3c}
-.sws-battery-mid{background:#f39c12}
-.sws-battery-ok{background:#27ae60}
-
-/* WiFi signal bars */
-.sws-wifi-bars{display:inline-flex;align-items:flex-end;gap:1px;height:14px;vertical-align:middle}
-.sws-wifi-bar{width:3px;border-radius:1px;background:#555}
-.sws-wifi-bar.active{background:var(--sws-accent)}
-.sws-wifi-weak .sws-wifi-bar.active{background:#e74c3c}
-.sws-wifi-mid .sws-wifi-bar.active{background:#f39c12}
-.sws-wifi-good .sws-wifi-bar.active{background:#27ae60}
 
 /* ===== Forms ===== */
 .sws-fieldset{border:1px solid var(--sws-border);border-radius:4px;padding:12px 14px;margin-bottom:12px}
@@ -270,11 +224,12 @@ body.sws-login-page{display:flex;align-items:center;justify-content:center;min-h
 .sws-history-raw{background:var(--sws-card);border:1px solid var(--sws-border);border-radius:6px;padding:16px;margin-top:24px;width:100%;box-sizing:border-box}
 .sws-history-raw-title{font-size:.85rem;font-weight:600;color:var(--sws-muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em}
 .sws-raw-scroll{overflow-x:auto;width:100%}
-.sws-raw-table{width:100%;border-collapse:collapse;font-size:.82rem;min-width:600px}
-.sws-raw-table th{text-align:left;padding:6px 12px;border-bottom:2px solid var(--sws-border);color:var(--sws-muted);white-space:nowrap;font-weight:600}
-.sws-raw-table td{padding:5px 12px;border-bottom:1px solid var(--sws-border);color:var(--sws-text);white-space:nowrap}
-.sws-raw-ts{color:var(--sws-muted)!important;font-size:.8rem}
-.sws-raw-table tbody tr:hover{background:rgba(255,255,255,.03)}
+.sws-raw-table{width:100%;border-collapse:collapse;font-size:.82rem;table-layout:auto}
+.sws-raw-table th{text-align:left;padding:6px 10px;border-bottom:2px solid var(--sws-border);color:var(--sws-muted);font-weight:600;white-space:nowrap}
+.sws-raw-table td{padding:6px 12px;border-bottom:1px solid var(--sws-border);color:var(--sws-text);max-width:250px;overflow:hidden;text-overflow:ellipsis}
+.sws-raw-ts{color:var(--sws-muted)!important;font-size:.78rem;white-space:nowrap;min-width:140px}
+.sws-raw-actions{white-space:nowrap;text-align:center;min-width:60px}
+.sws-raw-table tbody tr:hover{background:rgba(255,255,255,.04)}
 
 /* ===== Server-Info & Log-Statistik ===== */
 .sws-info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}

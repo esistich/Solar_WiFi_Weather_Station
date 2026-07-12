@@ -12,6 +12,9 @@ $slug    = $_GET['station'] ?? null;
 $station = resolveStation($db, $slug);
 
 if (!$station) {
+	logSystemEvent('warning', 'station', 'UNKNOWN_STATION_STATUS', "Unbekannte Station '$slug' via GET /status", [
+		'slug' => $slug ?? '(kein)',
+	]);
 	sendJson(200, ['status' => 'no_station', 'fresh' => false]);
 }
 
