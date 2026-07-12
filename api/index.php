@@ -17,7 +17,11 @@ require_once __DIR__ . '/helpers.php';
 
 // ── URI parsen ────────────────────────────────────────────────────────
 $uri    = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
-$uri    = '/' . trim(preg_replace('#^.*?/sws/api#', '', $uri), '/');
+$uri    = trim(preg_replace('#^.*?/sws/api#', '', $uri), '/');
+if (preg_match('#^v1/(.*)$#', $uri, $m)) {
+	$uri = $m[1];
+}
+$uri    = '/' . $uri;
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
 // Legacy: ?r=route Fallback

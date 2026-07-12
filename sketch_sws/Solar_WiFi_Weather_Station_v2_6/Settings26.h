@@ -61,9 +61,9 @@ const String Version = "2.7.6";
 
 /****** WiFi Settings (Compile-Zeit-Fallbacks) *****************************/
 
-#define CFG_DEFAULT_STATION_NAME  "SWS_YourPlace"
-#define CFG_DEFAULT_WIFI_SSID     "YOUR_SSID"
-#define CFG_DEFAULT_WIFI_PASS     "YOUR_PASSWORD"
+#define CFG_DEFAULT_STATION_NAME  "SWS_Waggum"
+#define CFG_DEFAULT_WIFI_SSID     "WLAN-Brandes"
+#define CFG_DEFAULT_WIFI_PASS     "5342125158082205"
 
 /****** REST-API Settings ***************************************************/
 #define USE_API 1                         // REST-API-Upload aktivieren
@@ -74,7 +74,7 @@ const String Version = "2.7.6";
 #define CFG_DEFAULT_API_PATH      "/sws/api/data"
 #define CFG_DEFAULT_API_PORT      443
 #define CFG_DEFAULT_API_USER      "NAy1b4GpuS3dEvej"
-#define CFG_DEFAULT_API_PASS      "REDACTED_API_PASS"
+#define CFG_DEFAULT_API_PASS      "41GpfH#aJtIl8yZ7u0V6UWwk"
 
 /****** Remote-Config (automatischer Abruf von Einstellungen) **************
  * Beim Boot wird nach dem WiFi-Connect einmalig GET /v1/config aufgerufen.

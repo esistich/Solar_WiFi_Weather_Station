@@ -6,7 +6,10 @@
 declare(strict_types=1);
 
 $db  = getDb();
-$uri = '/' . trim(preg_replace('#^.*?/sws/api#', '', parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH)), '/');
+$uri = trim(preg_replace('#^.*?/sws/api#', '', parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH)), '/');
+if (preg_match('#^v1/(.*)$#', $uri, $m)) {
+	$uri = $m[1];
+}
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
 // ── POST /auth/login ────────────────────────────────────────────────

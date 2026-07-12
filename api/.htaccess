@@ -11,8 +11,8 @@ RewriteBase /sws/api
 RewriteCond %{HTTP:Authorization} .
 RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
-# Alte /v1/-Pfade permanent umleiten
-RewriteRule ^v1/(.*)$ /sws/api/$1 [R=301,L]
+# Alte /v1/-Pfade intern an den Router weiterreichen (ohne Redirect)
+RewriteRule ^v1/(.*)$ /sws/api/$1 [L,QSA]
 
 # Altes Admin-Verzeichnis umleiten
 RewriteRule ^admin/?$ /sws/api/ [R=301,L]
