@@ -18,7 +18,7 @@
 
 // ------ API -------------------------------------------------
 #define CFG_DEFAULT_API_HOST    "timm-sander.net"
-#define CFG_DEFAULT_API_PATH    "/sws/api/v1/data"
+#define CFG_DEFAULT_API_PATH    "/sws/api/data"
 #define CFG_DEFAULT_API_HTTPS   true
 
 // ------ Aktualisierungsintervall ----------------------------

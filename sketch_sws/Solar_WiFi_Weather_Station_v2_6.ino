@@ -822,29 +822,7 @@ void measurementEvent() {
 
 } // end of void measurementEvent()
 
-// CalculateTrend() und ZambrettiLetter() wurden in die API ausgelagert (api/v1/zambretti.php).
-
-  // ----- Seasonal precipitation word selection with hysteresis -----
-bool isWinterMode() {
-  static bool winter = false;
-  if (winter && measured_temp > WINTER_THRESHOLD_HIGH) winter = false;
-  if (!winter && measured_temp <= WINTER_THRESHOLD_LOW) winter = true;
-  return winter;
-}
-
-// ----- Replace one occurrence of `marker` in `dest` with `replacement` -----
-// Simple in-place substitution. Returns the modified String.
-// We use String here because the result length varies and the call site
-// only happens once per measurement cycle (no hot path).
-static String replaceMarker(const String& src, const char* marker, const char* replacement) {
-  String result = src;
-  int pos = result.indexOf(marker);
-  while (pos >= 0) {
-    result = result.substring(0, pos) + replacement + result.substring(pos + strlen(marker));
-    pos = result.indexOf(marker, pos + strlen(replacement));
-  }
-  return result;
-}
+// Zambretti (CalculateTrend/ZambrettiLetter) wird server-seitig in der API berechnet (api/v1/zambretti.php).
 
 #if USE_OTA
 #include <ESP8266httpUpdate.h>
@@ -932,13 +910,6 @@ static void checkForOTA() {
 }
 #endif  // USE_OTA
 
-// ZambrettiSays() wurde in die API ausgelagert (api/v1/zambretti.php).
-
-// ReadFromSPIFFS() / WriteToSPIFFS() / FirstTimeRun() wurden entfernt �?"
-// Druckverlauf wird jetzt server-seitig in der DB gespeichert.
-
-
-
 #if USE_DS18B20
 float getTemperature() {
   // Bis zu 3 Versuche �?" DS18B20 braucht manchmal einen zweiten Anlauf
@@ -986,7 +957,7 @@ void sendToAPI() {
     .set("battery_volt",   volt)
     .set("battery_pct",    batterypercentage)
     .set("wifi_strength",  (int)WiFi.RSSI())
-    .set("timestamp",      (int)current_timestamp)
+    .set("device_ts",      (int)current_timestamp)
     .setIfValid("pool_temperature", pool_temp)
     .send();
   if (!result.ok) {

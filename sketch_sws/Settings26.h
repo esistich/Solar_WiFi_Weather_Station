@@ -71,7 +71,7 @@ const String Version = "2.7.2";
 #define CFG_DEFAULT_API_ENABLED   true
 #define CFG_DEFAULT_API_HTTPS     true
 #define CFG_DEFAULT_API_HOST      "timm-sander.net"
-#define CFG_DEFAULT_API_PATH      "/sws/api/v1/data"
+#define CFG_DEFAULT_API_PATH      "/sws/api/data"
 #define CFG_DEFAULT_API_PORT      443
 #define CFG_DEFAULT_API_USER      "NAy1b4GpuS3dEvej"
 #define CFG_DEFAULT_API_PASS      "REDACTED_API_PASS"
@@ -91,7 +91,7 @@ const String Version = "2.7.2";
  * oder per OTA-Update angepasst werden.
  ****************************************************************************/
 #define USE_REMOTE_CONFIG         1
-#define CFG_REMOTE_CONFIG_PATH    "/sws/api/v1/config"
+#define CFG_REMOTE_CONFIG_PATH    "/sws/api/config"
 #define CFG_REMOTE_CONFIG_TIMEOUT 5000    // Max. Wartezeit in ms
 
 /****** OTA-Update (Over-the-Air Firmware) *********************************

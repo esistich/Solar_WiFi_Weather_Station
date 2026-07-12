@@ -139,6 +139,9 @@ SWSResult SWSApiClient::logError(const char* level,
 	logDoc["level"]   = level;
 	logDoc["code"]    = code;
 	logDoc["message"] = message;
+	// Stations-Identifier fuer korrekte Zuordnung im Fehlerlog
+	if (_deviceMac.length() > 0)    logDoc["device_mac"]    = _deviceMac;
+	if (_stationName.length() > 0)  logDoc["station_name"]  = _stationName;
 	if (context && context[0] != '\0') {
 		// Kontext als rohen JSON-String einbetten
 		JsonDocument ctxDoc;
@@ -149,7 +152,7 @@ SWSResult SWSApiClient::logError(const char* level,
 		}
 	}
 
-	char buf[384];
+	char buf[512];
 	serializeJson(logDoc, buf, sizeof(buf));
 
 	Serial.printf("SWSApiClient: log [%s] %s – %s\n", level, code, message);
@@ -211,13 +214,13 @@ SWSResult SWSApiClient::_post(const String& path, const String& jsonBody) {
 }
 
 // -----------------------------------------------------------------------
-// _deriveLogPath() – /v1/data.php -> /v1/log.php
+// _deriveLogPath() – /sws/api/data → /sws/api/log
 // -----------------------------------------------------------------------
 String SWSApiClient::_deriveLogPath() const {
-	// Letztes Pfadsegment durch "log.php" ersetzen
+	// Letztes Pfadsegment durch "log" ersetzen
 	int lastSlash = _dataPath.lastIndexOf('/');
 	if (lastSlash >= 0) {
-		return _dataPath.substring(0, lastSlash + 1) + "log.php";
+		return _dataPath.substring(0, lastSlash + 1) + "log";
 	}
-	return "/log.php";
+	return "/log";
 }

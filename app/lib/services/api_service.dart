@@ -23,19 +23,13 @@ class ApiService {
     return {HttpHeaders.authorizationHeader: 'Bearer $token'};
   }
 
-  /// Hilfsmethode zur Erstellung der API-URL (umgeht Server-Umleitungen)
+  /// Hilfsmethode zur Erstellung der API-URL
   Uri _buildUri(Device device, String route, [Map<String, dynamic>? query]) {
     final baseUrl = device.baseUrl;
-    final apiRoot = device.apiPath.contains('/v1/')
-		? device.apiPath.substring(0, device.apiPath.indexOf('/v1/'))
-		: device.apiPath.replaceFirst(RegExp(r'/[^/]+\.php$'), '');
-    
-    // Nutze index.php?r=route als sichersten Weg
-    return Uri.parse('$baseUrl$apiRoot/v1/index.php').replace(
-      queryParameters: {
-        'r': route,
-        ...?(query ?? {}),
-      },
+    // Pfad aus apiPath extrahieren (z.B. /sws/api/data → /sws/api)
+    final apiRoot = device.apiPath.replaceFirst(RegExp(r'/[^/]+$'), '');
+    return Uri.parse('$baseUrl$apiRoot/$route').replace(
+      queryParameters: query?.map((k, v) => MapEntry(k, v.toString())),
     );
   }
 
