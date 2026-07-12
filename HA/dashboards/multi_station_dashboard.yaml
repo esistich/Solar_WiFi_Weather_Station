@@ -1,0 +1,16 @@
+title: SWS Ecosystem Multi-Station Overview
+views:
+  - title: Overview
+    cards:
+      - type: markdown
+        content: |
+          # SWS Ecosystem
+          Mehrfachstationen werden hier als separate Geräte abgebildet.
+      - type: entities
+        title: Stationen
+        entities:
+          - sensor.sws_bienrode_temperature
+          - sensor.sws_bienrode_humidity
+          - sensor.sws_bienrode_battery_pct
+          - sensor.sws_bienrode_wifi_strength
+          - sensor.sws_bienrode_zambretti_text

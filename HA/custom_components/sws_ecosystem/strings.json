@@ -1,0 +1,21 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "SWS Ecosystem",
+        "description": "Add a weather station by entering its unique slug.",
+        "data": {
+          "slug": "Slug"
+        }
+      }
+    },
+    "error": {
+      "invalid_slug": "Please enter a valid station slug.",
+      "cannot_connect": "Unable to connect to the SWS API.",
+      "already_configured": "This station is already configured."
+    },
+    "abort": {
+      "already_configured": "This station is already configured."
+    }
+  }
+}

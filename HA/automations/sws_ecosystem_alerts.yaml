@@ -1,0 +1,71 @@
+alias: SWS Ecosystem Alerts
+description: Alerts for overheating, frost, pressure drops, battery, and WiFi quality
+trigger:
+  - platform: numeric_state
+    entity_id: sensor.sws_bienrode_temperature
+    above: 28
+    for:
+      minutes: 5
+  - platform: numeric_state
+    entity_id: sensor.sws_bienrode_temperature
+    below: 0
+    for:
+      minutes: 5
+  - platform: state
+    entity_id: sensor.sws_bienrode_pressure_state
+    to: "storm"
+  - platform: numeric_state
+    entity_id: sensor.sws_bienrode_battery_pct
+    below: 20
+  - platform: numeric_state
+    entity_id: sensor.sws_bienrode_wifi_strength
+    below: -80
+condition: []
+action:
+  - choose:
+      - conditions:
+          - condition: numeric_state
+            entity_id: sensor.sws_bienrode_temperature
+            above: 28
+        sequence:
+          - service: persistent_notification.create
+            data:
+              title: "⚠️ Hitze-Warnung"
+              message: "Die Temperatur der Station hat den Grenzwert überschritten."
+      - conditions:
+          - condition: numeric_state
+            entity_id: sensor.sws_bienrode_temperature
+            below: 0
+        sequence:
+          - service: persistent_notification.create
+            data:
+              title: "⚠️ Frost-Warnung"
+              message: "Die Temperatur der Station liegt unter dem Frostbereich."
+      - conditions:
+          - condition: state
+            entity_id: sensor.sws_bienrode_pressure_state
+            state: "storm"
+        sequence:
+          - service: persistent_notification.create
+            data:
+              title: "⚠️ Luftdrucksturz"
+              message: "Eine starke Druckänderung weist auf ein Gewitterereignis hin."
+      - conditions:
+          - condition: numeric_state
+            entity_id: sensor.sws_bienrode_battery_pct
+            below: 20
+        sequence:
+          - service: persistent_notification.create
+            data:
+              title: "⚠️ Batterie-Warnung"
+              message: "Batterie der Wetterstation ist niedrig."
+      - conditions:
+          - condition: numeric_state
+            entity_id: sensor.sws_bienrode_wifi_strength
+            below: -80
+        sequence:
+          - service: persistent_notification.create
+            data:
+              title: "⚠️ WLAN-Warnung"
+              message: "Das WLAN-Signal der Wetterstation ist sehr schwach."
+mode: single

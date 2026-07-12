@@ -1,0 +1,21 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "SWS Ecosystem",
+        "description": "Station über einen eindeutigen Slug hinzufügen.",
+        "data": {
+          "slug": "Slug"
+        }
+      }
+    },
+    "error": {
+      "invalid_slug": "Bitte gib einen gültigen Stations-Slug ein.",
+      "cannot_connect": "Die Verbindung zur SWS-API ist fehlgeschlagen.",
+      "already_configured": "Diese Station ist bereits konfiguriert."
+    },
+    "abort": {
+      "already_configured": "Diese Station ist bereits konfiguriert."
+    }
+  }
+}

@@ -1,0 +1,44 @@
+title: SWS Ecosystem Premium Dashboard
+views:
+  - title: Weather
+    cards:
+      - type: gauge
+        entity: sensor.sws_bienrode_temperature
+        name: Temperatur
+        min: -20
+        max: 50
+        severity:
+          - color: '#00b0ff'
+            from: -20
+            to: 5
+          - color: '#ffd54f'
+            from: 5
+            to: 25
+          - color: '#ff7043'
+            from: 25
+            to: 50
+      - type: history-graph
+        entities:
+          - sensor.sws_bienrode_temperature
+          - sensor.sws_bienrode_humidity
+        hours_to_show: 24
+        title: Verlauf 24h
+      - type: markdown
+        content: |
+          ## Zambretti Vorhersage
+          {{ states('sensor.sws_bienrode_zambretti_text') }}
+      - type: statistics-graph
+        entities:
+          - sensor.sws_bienrode_temperature
+          - sensor.sws_bienrode_dewpoint
+        stat_types:
+          - mean
+        title: Temperaturstatistik
+      - type: entities
+        title: Systemstatus
+        entities:
+          - sensor.sws_bienrode_battery_pct
+          - sensor.sws_bienrode_wifi_strength
+          - sensor.sws_bienrode_fw_version
+          - sensor.sws_bienrode_pressure_state
+          - sensor.sws_bienrode_trend_text

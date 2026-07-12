@@ -1,0 +1,35 @@
+alias: Regenmesser Warnungen
+description: Wetterwarnungen für den ESPHome-Regenmesser
+trigger:
+  - platform: numeric_state
+    entity_id: sensor.regenrate_1m
+    above: 5
+    for:
+      minutes: 3
+  - platform: numeric_state
+    entity_id: sensor.regen_heute
+    above: 15
+    for:
+      minutes: 10
+condition: []
+action:
+  - choose:
+      - conditions:
+          - condition: numeric_state
+            entity_id: sensor.regenrate_1m
+            above: 5
+        sequence:
+          - service: persistent_notification.create
+            data:
+              title: "⚠️ Starkregen"
+              message: "Die Regenrate liegt über 5 mm/min."
+      - conditions:
+          - condition: numeric_state
+            entity_id: sensor.regen_heute
+            above: 15
+        sequence:
+          - service: persistent_notification.create
+            data:
+              title: "⚠️ Hoher Tagesniederschlag"
+              message: "Heute sind bereits mehr als 15 mm Regen gefallen."
+mode: single

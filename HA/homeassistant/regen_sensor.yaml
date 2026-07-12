@@ -1,0 +1,60 @@
+mqtt:
+  sensor:
+    - name: "Regen Heute"
+      unique_id: regen_heute
+      state_topic: "regenmesser/rain_today_sensor"
+      unit_of_measurement: "mm"
+      device_class: precipitation
+      state_class: total
+      icon: mdi:weather-rainy
+
+    - name: "Regen Woche"
+      unique_id: regen_woche
+      state_topic: "regenmesser/rain_week_sensor"
+      unit_of_measurement: "mm"
+      device_class: precipitation
+      state_class: total
+      icon: mdi:weather-partly-rainy
+
+    - name: "Regen Monat"
+      unique_id: regen_monat
+      state_topic: "regenmesser/rain_month_sensor"
+      unit_of_measurement: "mm"
+      device_class: precipitation
+      state_class: total
+      icon: mdi:weather-rainy
+
+    - name: "Regen Jahr"
+      unique_id: regen_jahr
+      state_topic: "regenmesser/rain_year_sensor"
+      unit_of_measurement: "mm"
+      device_class: precipitation
+      state_class: total
+      icon: mdi:weather-pouring
+
+    - name: "Kippvorgänge Gesamt"
+      unique_id: regen_kipp_total
+      state_topic: "regenmesser/kipp_counter_sensor"
+      unit_of_measurement: "count"
+      icon: mdi:counter
+
+    - name: "Regenrate 1 Minute"
+      unique_id: regenrate_1m
+      state_topic: "regenmesser/regenrate_1m"
+      unit_of_measurement: "mm/min"
+      state_class: measurement
+      icon: mdi:water-percent
+
+    - name: "Regenrate 10 Minuten"
+      unique_id: regenrate_10m
+      state_topic: "regenmesser/regenrate_10m"
+      unit_of_measurement: "mm/min"
+      state_class: measurement
+      icon: mdi:water-percent
+
+    - name: "Regenrate 60 Minuten"
+      unique_id: regenrate_60m
+      state_topic: "regenmesser/regenrate_60m"
+      unit_of_measurement: "mm/h"
+      state_class: measurement
+      icon: mdi:water-percent
