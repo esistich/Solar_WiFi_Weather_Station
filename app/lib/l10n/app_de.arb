@@ -1,0 +1,19 @@
+{
+  "appTitle": "Solar Weather",
+  "addDevice": "Gerät hinzufügen",
+  "settings": "Einstellungen",
+  "noDevices": "Noch keine Geräte",
+  "refresh": "Aktualisieren",
+  "welcomeBack": "Willkommen zurück",
+  "notLoggedIn": "Nicht angemeldet",
+  "loginForCloudFeatures": "Für Cloud-Features einloggen",
+  "deviceManagement": "Geräteverwaltung",
+  "addNewStation": "Neue Station hinzufügen",
+  "noActiveWidgets": "Keine aktiven Widgets auf dem Homescreen gefunden.",
+  "appAppearance": "App & Darstellung",
+  "darkMode": "Dunkles Design",
+  "darkModeSubtitle": "Schont die Augen bei Nacht",
+  "aboutApp": "Über diese App",
+  "login": "Login",
+  "logout": "Abmelden"
+}

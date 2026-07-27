@@ -57,11 +57,11 @@ const String Version = "2.7.6";
  * USE_DS18B20 = 0  ->  kein Zusatzfuehler vorhanden
  ****************************************************************************/
 
-#define USE_DS18B20    1     // Dallas DS18B20 Zusatzfuehler (One-Wire, D7)
+#define USE_DS18B20    0     // Dallas DS18B20 Zusatzfuehler (One-Wire, D7)
 
 /****** WiFi Settings (Compile-Zeit-Fallbacks) *****************************/
 
-#define CFG_DEFAULT_STATION_NAME  "SWS_Waggum"
+#define CFG_DEFAULT_STATION_NAME  "SWS_Teich"
 #define CFG_DEFAULT_WIFI_SSID     "WLAN-Brandes"
 #define CFG_DEFAULT_WIFI_PASS     "5342125158082205"
 
