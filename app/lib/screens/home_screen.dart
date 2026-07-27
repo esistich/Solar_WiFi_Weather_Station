@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../l10n/generated/app_localizations.dart';
 import '../services/services.dart';
 import '../widgets/widgets.dart';
 import '../models/models.dart';
@@ -37,16 +38,23 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<DeviceProvider>();
-    // Tablet/Landscape Erkennung: Breite > 900px
-    final isTablet = MediaQuery.of(context).size.width > 900;
+    final width = MediaQuery.of(context).size.width;
+
+    // Material 3 Breakpoints:
+    // Compact (< 600dp), Medium (600-840dp), Expanded (> 840dp)
+    // Wir nutzen das Master-Detail Layout ab 'Expanded' (Tablet/Landscape)
+    final isExpanded = width >= 840;
+
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Solar Weather'),
+        title: Text(l10n.appTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () => provider.refreshAll(),
+            tooltip: l10n.refresh,
           ),
           IconButton(
             icon: const Icon(Icons.settings_outlined),
@@ -57,13 +65,13 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: isTablet 
+      body: isExpanded
           ? _buildTabletLayout(provider) 
           : _buildMobileLayout(provider),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openSetup(context),
         icon: const Icon(Icons.add),
-        label: const Text('Gerät hinzufügen'),
+        label: Text(l10n.addDevice),
       ),
     );
   }
@@ -72,10 +80,12 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildMobileLayout(DeviceProvider provider) {
     if (provider.devices.isEmpty) return _EmptyState(onAdd: () => _openSetup(context));
 
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
     return RefreshIndicator(
       onRefresh: provider.refreshAll,
       child: ListView.builder(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: EdgeInsets.only(top: 8, bottom: 80 + bottomPadding), // Platz für FAB + System-Nav
         itemCount: provider.devices.length,
         itemBuilder: (context, index) {
           final device = provider.devices[index];
@@ -106,13 +116,15 @@ class _HomeScreenState extends State<HomeScreen> {
       orElse: () => provider.devices.first,
     );
 
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
     return Row(
       children: [
         // Linke Spalte: Liste
         SizedBox(
           width: 350,
           child: ListView.builder(
-            padding: const EdgeInsets.all(8),
+            padding: EdgeInsets.fromLTRB(8, 8, 8, 80 + bottomPadding),
             itemCount: provider.devices.length,
             itemBuilder: (context, index) {
               final device = provider.devices[index];
@@ -158,9 +170,9 @@ class _EmptyState extends StatelessWidget {
         children: [
           const Icon(Icons.wb_cloudy_outlined, size: 72, color: Colors.grey),
           const SizedBox(height: 16),
-          const Text('Noch keine Geräte', style: TextStyle(fontSize: 18, color: Colors.grey)),
+          Text(AppLocalizations.of(context)!.noDevices, style: const TextStyle(fontSize: 18, color: Colors.grey)),
           const SizedBox(height: 24),
-          FilledButton.icon(onPressed: onAdd, icon: const Icon(Icons.add), label: const Text('Gerät hinzufügen')),
+          FilledButton.icon(onPressed: onAdd, icon: const Icon(Icons.add), label: Text(AppLocalizations.of(context)!.addDevice)),
         ],
       ),
     );

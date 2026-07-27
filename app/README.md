@@ -1,75 +1,60 @@
 # SWS Companion App – Flutter
 
-Eine Android-App (Flutter) zur Verwaltung und Überwachung von Solar WiFi Weather Stations.
+Eine moderne Android-App (Flutter) zur Echtzeit-Überwachung und Konfiguration deiner Solar WiFi Weather Stations (SWS).
+
+## Features
+
+- **Dashboard**: Übersicht über alle Stationen mit dynamischen Hintergründen (Material 3 Dynamic Color).
+- **Detailansicht**: Interaktive History-Charts (Temperatur, Luftfeuchte, Druck, Akku) für verschiedene Zeiträume (6h, 24h, 7d).
+- **Immersives Design**: Volle Edge-to-Edge Unterstützung für Android 15+.
+- **Automatisches Setup**: Integrierter Soft-AP Flow zum einfachen Verbinden neuer Stationen mit deinem WLAN.
+- **Benachrichtigungen**: Intelligente Frost- und Akkuwarnungen im Hintergrund.
+- **Widgets**: Unterstützung für Android Homescreen-Widgets zur schnellen Statusprüfung.
 
 ## Voraussetzungen
 
-- Flutter SDK ≥ 3.32 → https://docs.flutter.dev/get-started/install/windows
-- Android Studio oder VS Code mit Flutter-Extension
-- Android SDK (wird mit Android Studio installiert)
-- Firebase-Projekt (für Push-Benachrichtigungen)
+- Flutter SDK ≥ 3.32
+- Android Studio oder VS Code
+- Ein konfiguriertes SWS-Backend (PHP/Node.js)
 
 ## Erste Schritte
 
-```bash
-cd app
+1. **Abhängigkeiten installieren**:
+   ```bash
+   flutter pub get
+   ```
 
-# Abhängigkeiten installieren
-flutter pub get
+2. **Lokalisierung generieren**:
+   Die App nutzt das offizielle Flutter Localization System, generiert jedoch die Dateien lokal im Projekt für maximale Kompatibilität. Führe den folgenden Befehl aus, um die Sprachdateien zu generieren:
+   ```bash
+   flutter gen-l10n
+   ```
+   Dies erstellt die Dateien im Verzeichnis `lib/l10n/generated/`.
 
-# Firebase konfigurieren (einmalig)
-# 1. Firebase Console → Projekt erstellen
-# 2. Android-App registrieren (Package: net.timm_sander.sws)
-# 3. google-services.json herunterladen → app/android/app/google-services.json
+3. **Firebase Konfiguration**:
+   Registriere deine App in der Firebase Console (Package: `net.timm_sander.sws`) und platziere die `google-services.json` in `android/app/`.
 
-# Debug-Build starten
-flutter run
+4. **App starten**:
+   ```bash
+   flutter run
+   ```
 
-# Release-APK bauen
-flutter build apk --release
-# → build/app/outputs/flutter-apk/app-release.apk
-```
+## Architektur
 
-## Projektstruktur
+Die App folgt einer sauberen Architektur mit klarer Trennung von Belangen:
 
-```
-lib/
-  main.dart              Einstiegspunkt, Provider-Setup, Theme
-  models/
-	device.dart          Gerät (Name, API-URL, ID)
-	measurement.dart     Messwert + History-Punkt
-	app_user.dart        Angemeldeter Nutzer (JWT)
-  services/
-	api_service.dart     PHP-API (data.php, history.php)
-	device_repository.dart  Geräte in SharedPreferences
-	device_provider.dart    ChangeNotifier State
-	device_setup_service.dart  Soft-AP Setup-Flow
-	auth_service.dart    Login/Register gegen Node.js-Backend
-	push_service.dart    FCM-Token registrieren
-  screens/
-	home_screen.dart     Dashboard mit Kacheln
-	detail_screen.dart   Detailansicht + History-Chart
-	device_setup_screen.dart  3-Schritt Geräte-Setup
-	settings_screen.dart Geräte verwalten, Account
-  widgets/
-	tile_card.dart       Gerätekachel
-	history_chart.dart   Temperatur-Verlaufschart (fl_chart)
-```
+- **Services**: Kapseln die externe Kommunikation (API, Auth, Push, Alarme).
+- **Models**: Definieren die Datenstrukturen (Device, Measurement).
+- **Provider**: Verwalten den globalen App-Zustand (State Management via `provider`).
+- **UI (Screens/Widgets)**: Deklarative Benutzeroberfläche mit Jetpack Compose-ähnlichem Aufbau in Flutter.
 
-## App-Icon anpassen
+## Lokalisierung (l10n)
 
-Ersetze `assets/images/app_icon.png` (1024×1024 px) und führe aus:
-```bash
-flutter pub add --dev flutter_launcher_icons
-# Icon-Konfiguration in pubspec.yaml ergänzen, dann:
-dart run flutter_launcher_icons
-```
+Alle Texte der App sind zentralisiert. Um neue Texte hinzuzufügen oder bestehende zu ändern:
+1. Bearbeite `lib/l10n/app_de.arb`.
+2. Führe `flutter gen-l10n` aus.
+3. Greife im Code via `AppLocalizations.of(context)!` auf die Texte zu.
 
-## Backend verbinden
+## Lizenz
 
-Trage die Backend-URL in `lib/services/auth_service.dart` ein:
-```dart
-static const String defaultBackendUrl = 'https://dein-backend.example.com';
-```
-
-Oder mach es in den App-Einstellungen konfigurierbar (SettingsScreen → Backend-URL).
+Dieses Projekt steht unter der **MIT-Lizenz**. Siehe [LICENSE](LICENSE) für Details.

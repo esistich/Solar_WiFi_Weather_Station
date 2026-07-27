@@ -1,5 +1,6 @@
 ﻿import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/models.dart';
 
@@ -28,9 +29,11 @@ class ApiService {
     final baseUrl = device.baseUrl;
     // Pfad aus apiPath extrahieren (z.B. /sws/api/data → /sws/api)
     final apiRoot = device.apiPath.replaceFirst(RegExp(r'/[^/]+$'), '');
-    return Uri.parse('$baseUrl$apiRoot/$route').replace(
+    final uri = Uri.parse('$baseUrl$apiRoot/$route').replace(
       queryParameters: query?.map((k, v) => MapEntry(k, v.toString())),
     );
+    debugPrint("API Build URI: $uri");
+    return uri;
   }
 
   Future<ApiResult<Measurement>> fetchLatest(Device device) async {
@@ -54,7 +57,18 @@ class ApiService {
       final json = jsonDecode(response.body);
       return (data: Measurement.fromJson(json), error: null);
     } catch (e) {
-      return (data: null, error: 'Verbindungsfehler: Keine Antwort vom Server.');
+      debugPrint("API Error (fetchLatest): $e");
+      String errorMsg = 'Verbindungsfehler';
+      if (e is SocketException) {
+        errorMsg = 'Server nicht gefunden (DNS-Fehler). Bitte Adresse prüfen.';
+      } else if (e is HttpException) {
+        errorMsg = 'Server-Fehler (HTTP).';
+      } else if (e is FormatException) {
+        errorMsg = 'Ungültige Antwort vom Server.';
+      } else {
+        errorMsg = 'Keine Antwort vom Server oder Zeitüberschreitung.';
+      }
+      return (data: null, error: errorMsg);
     }
   }
 
@@ -106,7 +120,7 @@ class ApiService {
     required String bearerToken,
   }) async {
     try {
-      final uri = _buildUri(device, 'admin/stations');
+      final uri = _buildUri(device, 'stations');
       
       final response = await _client
           .patch(
@@ -133,6 +147,26 @@ class ApiService {
       return (data: stationData, error: null);
     } catch (e) {
       return (data: null, error: 'Server nicht erreichbar oder Zeitüberschreitung.');
+    }
+  }
+
+  Future<ApiResult<List<Map<String, dynamic>>>> fetchStations(Device device, {String? bearerToken}) async {
+    try {
+      final uri = _buildUri(device, 'stations');
+      final response = await _client
+          .get(uri, headers: _bearerHeaders(bearerToken))
+          .timeout(const Duration(seconds: 10));
+
+      if (response.statusCode != 200) {
+        return (data: null, error: 'Fehler beim Laden der Stationen (HTTP ${response.statusCode})');
+      }
+
+      final json = jsonDecode(response.body);
+      final List<dynamic> list = (json is Map && json['stations'] is List) ? json['stations'] : (json is List ? json : []);
+      return (data: list.cast<Map<String, dynamic>>(), error: null);
+    } catch (e) {
+      debugPrint("API Error (fetchStations): $e");
+      return (data: null, error: 'Verbindungsfehler beim Abrufen der Stationen.');
     }
   }
 

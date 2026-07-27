@@ -157,6 +157,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		'battery_pct'    => ['Batterie',           '%'],
 		'battery_volt'   => ['Spannung',           'V'],
 		'wifi_strength'  => ['WLAN',               'dBm'],
+		'dewpoint'       => ['Taupunkt',            '°C'],
+		'dewpointspread' => ['Taupunktdifferenz',   '°C'],
+		'heatindex'      => ['Hitzeindex',          '°C'],
+		'fw_version'     => ['Firmware-Version',    ''],
+		'mq_raw'         => ['MQ135 Rohwert',       ''],
+		'mq_avg'         => ['MQ135 Mittelwert',    ''],
+		'mq_index'       => ['MQ135 Index',         '%'],
+		'mq_trend'       => ['MQ135 Trend',         ''],
+		'mq_min'         => ['MQ135 Minimum',       ''],
+		'mq_max'         => ['MQ135 Maximum',       ''],
 	];
 
 	$errors = [];

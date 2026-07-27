@@ -102,8 +102,17 @@ class MeasurementPoint {
   final double temperature;
   final double? poolTemperature;
   final double relPressure;
+  final double absPressure;
   final double humidity;
   final int batteryPct;
+  final double? dewpoint;
+  final double? dewpointspread;
+  final double? heatindex;
+  final String? pressureState;
+  final String? zambretti;
+  final String? zambrettiText;
+  final String? trendText;
+  final int? trend;
   final Map<String, double> extraSensors;
 
   const MeasurementPoint({
@@ -111,8 +120,17 @@ class MeasurementPoint {
 	required this.temperature,
 	this.poolTemperature,
 	required this.relPressure,
+	required this.absPressure,
 	required this.humidity,
 	required this.batteryPct,
+    this.dewpoint,
+    this.dewpointspread,
+    this.heatindex,
+    this.pressureState,
+    this.zambretti,
+    this.zambrettiText,
+    this.trendText,
+    this.trend,
     this.extraSensors = const {},
   });
 
@@ -123,8 +141,11 @@ class MeasurementPoint {
 		: null;
         
     final knownKeys = {
-      'temperature', 'pool_temperature', 'humidity', 'rel_pressure', 
-      'abs_pressure', 'battery_pct', 'created_at'
+      'temperature', 'pool_temperature', 'humidity', 'rel_pressure',
+      'abs_pressure', 'battery_pct', 'created_at',
+      'dewpoint', 'dewpointspread', 'heatindex',
+      'pressure_state', 'zambretti', 'zambretti_text',
+      'trend_text', 'trend',
     };
 
     final extras = <String, double>{};
@@ -134,13 +155,27 @@ class MeasurementPoint {
       }
     });
 
+    final d = json['dewpoint'];
+    final ds = json['dewpointspread'];
+    final hi = json['heatindex'];
+    final tr = json['trend'];
+
 	return MeasurementPoint(
 	  time:           DateTime.tryParse(raw) ?? DateTime.now(),
 	  temperature:    Measurement._toDouble(json['temperature']),
 	  poolTemperature:(poolRaw != null && poolRaw > -50) ? poolRaw : null,
 	  relPressure:    Measurement._toDouble(json['rel_pressure']),
+	  absPressure:    Measurement._toDouble(json['abs_pressure']),
 	  humidity:       Measurement._toDouble(json['humidity']),
 	  batteryPct:     (json['battery_pct'] as num?)?.toInt() ?? 0,
+	  dewpoint:       (d != null) ? Measurement._toDouble(d) : null,
+	  dewpointspread: (ds != null) ? Measurement._toDouble(ds) : null,
+	  heatindex:      (hi != null) ? Measurement._toDouble(hi) : null,
+	  pressureState:  Measurement._toStr(json['pressure_state']),
+	  zambretti:      Measurement._toStr(json['zambretti']),
+	  zambrettiText:  Measurement._toStr(json['zambretti_text']),
+	  trendText:      Measurement._toStr(json['trend_text']),
+	  trend:          (tr is num) ? tr.toInt() : null,
       extraSensors:   extras,
 	);
   }

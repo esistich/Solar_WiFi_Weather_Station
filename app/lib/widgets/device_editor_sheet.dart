@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import '../l10n/generated/app_localizations.dart';
 import '../models/models.dart';
 import '../services/services.dart';
 import 'weather_utils.dart';
@@ -79,7 +80,7 @@ class _DeviceEditorSheetState extends State<DeviceEditorSheet> {
         } else {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Änderungen erfolgreich gespeichert.')),
+            SnackBar(content: Text(AppLocalizations.of(context)!.changesSaved)),
           );
         }
       }
@@ -96,7 +97,8 @@ class _DeviceEditorSheetState extends State<DeviceEditorSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+    final l10n = AppLocalizations.of(context)!;
+
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
@@ -115,30 +117,30 @@ class _DeviceEditorSheetState extends State<DeviceEditorSheet> {
               child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
             ),
             const SizedBox(height: 20),
-            Text('Station konfigurieren', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+            Text(l10n.configureStation, style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 24),
             
-            TextField(controller: _nameCtrl, enabled: !_isSaving, decoration: const InputDecoration(labelText: 'Anzeigename')),
+            TextField(controller: _nameCtrl, enabled: !_isSaving, decoration: InputDecoration(labelText: l10n.displayName)),
             const SizedBox(height: 12),
-            TextField(controller: _slugCtrl, enabled: !_isSaving, decoration: const InputDecoration(labelText: 'Station Slug (API)')),
+            TextField(controller: _slugCtrl, enabled: !_isSaving, decoration: InputDecoration(labelText: l10n.stationSlugApi)),
             
             const Divider(height: 40),
-            Text('API-EINSTELLUNGEN', style: theme.textTheme.labelSmall?.copyWith(color: Colors.grey)),
+            Text(l10n.apiConfiguration.toUpperCase(), style: theme.textTheme.labelSmall?.copyWith(color: Colors.grey)),
             const SizedBox(height: 12),
             
-            TextField(controller: _hostCtrl, enabled: !_isSaving, decoration: const InputDecoration(labelText: 'Server Adresse')),
+            TextField(controller: _hostCtrl, enabled: !_isSaving, decoration: InputDecoration(labelText: l10n.serverAddress)),
             const SizedBox(height: 12),
-            TextField(controller: _pathCtrl, enabled: !_isSaving, decoration: const InputDecoration(labelText: 'API Pfad')),
+            TextField(controller: _pathCtrl, enabled: !_isSaving, decoration: InputDecoration(labelText: l10n.apiPath)),
             const SizedBox(height: 12),
             SwitchListTile(
               value: _https,
               onChanged: _isSaving ? null : (v) => setState(() => _https = v),
-              title: const Text('HTTPS verwenden'),
+              title: Text(l10n.secureConnection),
               contentPadding: EdgeInsets.zero,
             ),
             
             const Divider(height: 40),
-            Text('SYMBOL', style: theme.textTheme.labelSmall?.copyWith(color: Colors.grey)),
+            Text(l10n.stationSymbol.toUpperCase(), style: theme.textTheme.labelSmall?.copyWith(color: Colors.grey)),
             const SizedBox(height: 12),
             _IconPicker(selected: _iconIndex, onChanged: (i) => setState(() => _iconIndex = i)),
             
@@ -147,7 +149,7 @@ class _DeviceEditorSheetState extends State<DeviceEditorSheet> {
               onPressed: _isSaving ? null : _save,
               child: _isSaving 
                 ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                : const Text('Änderungen speichern'),
+                : Text(l10n.saveChanges),
             ),
           ],
         ),

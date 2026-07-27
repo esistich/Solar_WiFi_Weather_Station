@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:permission_handler/permission_handler.dart';
+import '../l10n/generated/app_localizations.dart';
 import '../models/models.dart';
 import '../services/services.dart';
 import '../widgets/weather_utils.dart';
@@ -39,6 +40,15 @@ class _DeviceSetupScreenState extends State<DeviceSetupScreen> {
   @override
   void initState() {
     super.initState();
+    final provider = context.read<DeviceProvider>();
+
+    // Falls bereits Geräte vorhanden sind, schlage den Host des ersten Geräts vor
+    if (widget.device == null && provider.devices.isNotEmpty) {
+      _apiHostCtrl.text = provider.devices.first.apiHost;
+      _apiPathCtrl.text = provider.devices.first.apiPath;
+      _apiHttps = provider.devices.first.apiHttps;
+    }
+
     if (widget.device != null) {
       final d = widget.device!;
       _nameCtrl.text = d.name;
@@ -93,10 +103,11 @@ class _DeviceSetupScreenState extends State<DeviceSetupScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.device != null ? 'Gerät anpassen' : 'Neues Gerät'),
+        title: Text(widget.device != null ? l10n.editDevice : l10n.newDevice),
         centerTitle: true,
       ),
       body: Column(
@@ -212,27 +223,27 @@ class _MethodStep extends StatelessWidget {
               .scale(duration: 600.ms, curve: Curves.easeOutBack),
           const SizedBox(height: 24),
           Text(
-            'Einrichtung starten',
+            AppLocalizations.of(context)!.startSetup,
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
-          const Text(
-            'Wie möchtest du deine Wetterstation verbinden?',
+          Text(
+            AppLocalizations.of(context)!.setupMethodSelection,
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey),
+            style: const TextStyle(color: Colors.grey),
           ),
           const SizedBox(height: 40),
           _MethodCard(
-            title: 'Automatisches Setup',
-            subtitle: 'Empfohlen: App sendet WLAN-Daten direkt an das Gerät.',
+            title: AppLocalizations.of(context)!.autoSetup,
+            subtitle: AppLocalizations.of(context)!.autoSetupSubtitle,
             icon: Icons.auto_fix_high_rounded,
             onTap: onSoftAp,
             isPrimary: true,
           ),
           const SizedBox(height: 16),
           _MethodCard(
-            title: 'Manuelle Eingabe',
-            subtitle: 'Direkte Eingabe der API-URL (für Fortgeschrittene).',
+            title: AppLocalizations.of(context)!.manualSetup,
+            subtitle: AppLocalizations.of(context)!.manualSetupSubtitle,
             icon: Icons.settings_ethernet_rounded,
             onTap: onManual,
             isPrimary: false,
@@ -312,31 +323,31 @@ class _SoftApStep extends StatelessWidget {
         children: [
           const Icon(Icons.wifi_tethering_rounded, size: 64, color: Colors.blue),
           const SizedBox(height: 24),
-          const Text(
-            'Gerät vorbereiten',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          Text(
+            AppLocalizations.of(context)!.prepareDevice,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
-          const Text(
-            '1. Halte den Button am Gerät für 2 Sek. gedrückt.\n2. Warte bis die LED blinkt.\n3. Gib hier deine WLAN-Daten ein.',
+          Text(
+            AppLocalizations.of(context)!.prepareDeviceInstructions,
             textAlign: TextAlign.center,
-            style: TextStyle(height: 1.5, color: Colors.grey),
+            style: const TextStyle(height: 1.5, color: Colors.grey),
           ),
           const SizedBox(height: 32),
           TextField(
             controller: ssidCtrl,
-            decoration: const InputDecoration(labelText: 'WLAN Name (SSID)', prefixIcon: Icon(Icons.wifi)),
+            decoration: InputDecoration(labelText: AppLocalizations.of(context)!.wifiName, prefixIcon: const Icon(Icons.wifi)),
           ),
           const SizedBox(height: 16),
           TextField(
             controller: passCtrl,
             obscureText: true,
-            decoration: const InputDecoration(labelText: 'WLAN Passwort', prefixIcon: Icon(Icons.lock_outline)),
+            decoration: InputDecoration(labelText: AppLocalizations.of(context)!.wifiPassword, prefixIcon: const Icon(Icons.lock_outline)),
           ),
           const SizedBox(height: 40),
           FilledButton(
             onPressed: onNext,
-            child: const Center(child: Text('Weiter zur API-Konfiguration')),
+            child: Center(child: Text(AppLocalizations.of(context)!.continueToApi)),
           ),
         ],
       ),
@@ -382,23 +393,29 @@ class _ConfigStep extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _label('Gerätename'),
+          _label(AppLocalizations.of(context)!.deviceName),
           TextField(controller: nameCtrl, decoration: const InputDecoration(hintText: 'z.B. Garten')),
           const SizedBox(height: 20),
-          _label('Server Adresse'),
+          _label(AppLocalizations.of(context)!.serverAddress),
           TextField(controller: apiHostCtrl, decoration: const InputDecoration(hintText: 'meinserver.de')),
           const SizedBox(height: 12),
-          _label('API Pfad'),
+          _label(AppLocalizations.of(context)!.apiPath),
           TextField(controller: apiPathCtrl, decoration: const InputDecoration(hintText: '/sws/api/v1/data')),
+          const SizedBox(height: 12),
+          _label(AppLocalizations.of(context)!.stationSlug),
+          TextField(
+            controller: stationSlugCtrl,
+            decoration: const InputDecoration(hintText: 'z.B. garten-nord'),
+          ),
           const SizedBox(height: 12),
           SwitchListTile(
             value: apiHttps,
             onChanged: onHttpsChanged,
-            title: const Text('Sichere Verbindung (HTTPS)'),
+            title: Text(AppLocalizations.of(context)!.secureConnection),
             contentPadding: EdgeInsets.zero,
           ),
           const Divider(height: 40),
-          _label('Station Symbol'),
+          _label(AppLocalizations.of(context)!.stationSymbol),
           const SizedBox(height: 8),
           _IconPicker(selected: iconIndex, onChanged: onIconChanged),
           const SizedBox(height: 32),
@@ -410,7 +427,7 @@ class _ConfigStep extends StatelessWidget {
           FilledButton.icon(
             onPressed: busy ? null : onSave,
             icon: busy ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.check),
-            label: Text(busy ? 'Speichere...' : 'Einrichtung abschließen'),
+            label: Text(busy ? AppLocalizations.of(context)!.saving : AppLocalizations.of(context)!.finishSetup),
           ),
         ],
       ),
@@ -468,11 +485,11 @@ class _SuccessStep extends StatelessWidget {
               .animate()
               .shake(duration: 500.ms),
           const SizedBox(height: 24),
-          const Text('Alles bereit!', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+          Text(AppLocalizations.of(context)!.setupSuccess, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
-          Text('Die Station "$name" wurde erfolgreich eingerichtet.', textAlign: TextAlign.center, style: const TextStyle(color: Colors.grey)),
+          Text(AppLocalizations.of(context)!.setupSuccessMessage(name), textAlign: TextAlign.center, style: const TextStyle(color: Colors.grey)),
           const SizedBox(height: 48),
-          FilledButton(onPressed: onDone, child: const Center(child: Text('Zum Dashboard'))),
+          FilledButton(onPressed: onDone, child: Center(child: Text(AppLocalizations.of(context)!.toDashboard))),
         ],
       ),
     );

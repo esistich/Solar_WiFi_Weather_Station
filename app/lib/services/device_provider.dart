@@ -5,13 +5,14 @@ import '../models/models.dart';
 import 'device_repository.dart';
 import 'api_service.dart';
 import 'notification_service.dart';
+import 'weather_alert_service.dart';
 import 'widget_service.dart';
 import 'auth_service.dart';
 
 class DeviceProvider extends ChangeNotifier {
   final DeviceRepository _repo;
   final ApiService _api;
-  final NotificationService? _notifications;
+  final WeatherAlertService _alertService;
   final AuthService? _auth;
 
   List<Device> _devices = [];
@@ -19,7 +20,8 @@ class DeviceProvider extends ChangeNotifier {
   final Map<String, bool> _loading = {};
   final Map<String, String?> _errors = {};
   final Map<String, List<MeasurementPoint>> _sparklines = {};
-  
+  final Map<String, List<MeasurementPoint>> _history = {};
+
   final Set<String> _activeFrostAlarms = {};
   final Set<String> _activeBatteryAlarms = {};
 
@@ -32,6 +34,7 @@ class DeviceProvider extends ChangeNotifier {
   Measurement? measurementFor(String deviceId) => _measurements[deviceId];
   bool isLoading(String deviceId) => _loading[deviceId] ?? false;
   String? errorFor(String deviceId) => _errors[deviceId];
+  List<MeasurementPoint> historyFor(String deviceId) => _history[deviceId] ?? [];
 
   DeviceProvider({
     DeviceRepository? repo, 
@@ -40,14 +43,15 @@ class DeviceProvider extends ChangeNotifier {
     AuthService? authService,
   }) : _repo = repo ?? DeviceRepository(),
        _api = api ?? ApiService(),
-       _notifications = notificationService,
+       _alertService = WeatherAlertService(notificationService ?? NotificationService()),
        _auth = authService;
 
   Future<void> loadDevices() async {
     _devices = await _repo.loadAll();
     await loadWidgetConfigs();
     notifyListeners();
-    await refreshAll();
+    // Startet die Abfrage im Hintergrund, ohne die UI zu blockieren
+    refreshAll();
   }
 
   Future<void> loadWidgetConfigs() async {
@@ -77,7 +81,11 @@ class DeviceProvider extends ChangeNotifier {
   Map<String, dynamic>? getConfigForWidget(int widgetId) => _widgetConfigs[widgetId];
 
   Future<void> refreshAll() async {
-    await Future.wait(_devices.map((d) => refreshDevice(d.id)));
+    // Wir führen die Abfragen nacheinander durch (sequential),
+    // um den Server/Netzwerk bei vielen Geräten nicht zu überlasten.
+    for (final device in _devices) {
+      await refreshDevice(device.id);
+    }
   }
 
   Future<void> refreshDevice(String id) async {
@@ -87,7 +95,23 @@ class DeviceProvider extends ChangeNotifier {
       _errors[id] = null;
       notifyListeners();
 
-      final result = await _api.fetchLatest(device);
+      // Automatische Slug-Erkennung, falls leer
+      Device currentDevice = device;
+      if (currentDevice.stationSlug.isEmpty) {
+        final token = _auth?.currentUser?.token;
+        final stationsResult = await _api.fetchStations(currentDevice, bearerToken: token);
+        if (stationsResult.data != null && stationsResult.data!.isNotEmpty) {
+          final discoveredSlug = stationsResult.data!.first['slug']?.toString();
+          if (discoveredSlug != null && discoveredSlug.isNotEmpty) {
+            currentDevice = currentDevice.copyWith(stationSlug: discoveredSlug);
+            await _repo.update(currentDevice);
+            final idx = _devices.indexWhere((d) => d.id == id);
+            if (idx >= 0) _devices[idx] = currentDevice;
+          }
+        }
+      }
+
+      final result = await _api.fetchLatest(currentDevice);
       
       if (result.error != null) {
         _errors[id] = result.error;
@@ -113,24 +137,26 @@ class DeviceProvider extends ChangeNotifier {
   }
 
   void _checkAlarms(Device device, Measurement m) {
-    if (m.temperature <= 3.0) {
-      _errors[device.id] = '⚠️ FROSTWARNUNG: ${m.temperature.toStringAsFixed(1)}°C';
-      if (!_activeFrostAlarms.contains(device.id)) {
-        _notifications?.showAlarm(id: device.id.hashCode + 1, title: 'Frostgefahr! ❄️', body: 'Station "${device.name}" meldet ${m.temperature.toStringAsFixed(1)}°C.');
-        _activeFrostAlarms.add(device.id);
-      }
-    } else {
-      _activeFrostAlarms.remove(device.id);
+    final alerts = _alertService.checkAlarms(
+      device: device,
+      measurement: m,
+      activeFrostAlarms: _activeFrostAlarms,
+      activeBatteryAlarms: _activeBatteryAlarms,
+    );
+    if (alerts.isNotEmpty) {
+      _errors[device.id] = alerts.first;
     }
+  }
 
-    if (m.batteryPct <= 20) {
-      _errors[device.id] = '🪫 AKKU SCHWACH: ${m.batteryPct}%';
-      if (!_activeBatteryAlarms.contains(device.id)) {
-        _notifications?.showAlarm(id: device.id.hashCode + 2, title: 'Akku fast leer! 🪫', body: 'Station "${device.name}" hat nur noch ${m.batteryPct}% Akku.');
-        _activeBatteryAlarms.add(device.id);
-      }
-    } else {
-      _activeBatteryAlarms.remove(device.id);
+  Future<void> loadFullHistory(String deviceId, {int hours = 24}) async {
+    final device = _devices.firstWhere((d) => d.id == deviceId);
+    final token = _auth?.currentUser?.token;
+    final result = await _api.fetchHistory(device, hours: hours, bearerToken: token);
+    if (result.data != null) {
+      _history[deviceId] = result.data!;
+      notifyListeners();
+    } else if (result.error != null) {
+      throw Exception(result.error);
     }
   }
 

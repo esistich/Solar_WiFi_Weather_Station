@@ -7,3 +7,4 @@ export 'push_service.dart';
 export 'notification_service.dart';
 export 'widget_service.dart';
 export 'theme_provider.dart';
+export 'weather_alert_service.dart';

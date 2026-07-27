@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
 
   # State Management
   provider: ^6.1.2
@@ -33,7 +35,7 @@ dependencies:
   dynamic_color: ^1.7.0
 
   # Zeitformatierung
-  intl: ^0.19.0
+  intl: ^0.20.2
 
   # WiFi-Verwaltung für Soft-AP Setup
   wifi_iot: ^0.3.19+1
@@ -67,6 +69,7 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  generate: true
   assets:
     - assets/images/
 

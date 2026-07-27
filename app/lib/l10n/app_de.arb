@@ -14,6 +14,94 @@
   "darkMode": "Dunkles Design",
   "darkModeSubtitle": "Schont die Augen bei Nacht",
   "aboutApp": "Über diese App",
-  "login": "Login",
-  "logout": "Abmelden"
+  "login": "Anmelden",
+  "logout": "Abmelden",
+  "editDevice": "Gerät anpassen",
+  "newDevice": "Neues Gerät",
+  "startSetup": "Einrichtung starten",
+  "setupMethodSelection": "Wie möchtest du deine Wetterstation verbinden?",
+  "autoSetup": "Automatisches Setup",
+  "autoSetupSubtitle": "Empfohlen: App sendet WLAN-Daten direkt an das Gerät.",
+  "manualSetup": "Manuelle Eingabe",
+  "manualSetupSubtitle": "Direkte Eingabe der API-URL (für Fortgeschrittene).",
+  "prepareDevice": "Gerät vorbereiten",
+  "prepareDeviceInstructions": "1. Halte den Button am Gerät für 2 Sek. gedrückt.\n2. Warte bis die LED blinkt.\n3. Gib hier deine WLAN-Daten ein.",
+  "wifiName": "WLAN Name (SSID)",
+  "wifiPassword": "WLAN Passwort",
+  "continueToApi": "Weiter zur API-Konfiguration",
+  "deviceName": "Gerätename",
+  "serverAddress": "Server-Adresse (z.B. meinedomain.de)",
+  "apiPath": "API-Pfad",
+  "stationSlug": "Station-ID / Slug (optional)",
+  "secureConnection": "Sichere Verbindung (HTTPS)",
+  "stationSymbol": "Station Symbol",
+  "finishSetup": "Einrichtung abschließen",
+  "saving": "Speichere...",
+  "setupSuccess": "Alles bereit!",
+  "setupSuccessMessage": "Die Station \"{name}\" wurde erfolgreich eingerichtet.",
+  "@setupSuccessMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "toDashboard": "Zum Dashboard",
+  "history": "Verlauf",
+  "apiConfiguration": "API Konfiguration",
+  "historyProtected": "Historie geschützt",
+  "loginToSeeHistory": "Um den Verlauf zu sehen, musst du dich anmelden.",
+  "loginNow": "Jetzt anmelden",
+  "noHistoryData": "Keine Daten für diesen Zeitraum vorhanden.",
+  "temperature": "Temperatur",
+  "humidity": "Feuchte",
+  "pressure": "Luftdruck",
+  "forecast": "Vorhersage",
+  "pressureTrend": "Drucktrend",
+  "battery": "Batterie",
+  "configureStation": "Station konfigurieren",
+  "displayName": "Anzeigename",
+  "stationSlugApi": "Station Slug (API)",
+  "saveChanges": "Änderungen speichern",
+  "changesSaved": "Änderungen erfolgreich gespeichert.",
+  "noDataAvailable": "Keine Daten verfügbar",
+  "pool": "Pool",
+  "relativeTimeJustNow": "gerade eben",
+  "relativeTimeMinutes": "vor {count} Min.",
+  "@relativeTimeMinutes": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "relativeTimeHours": "vor {count} Std.",
+  "@relativeTimeHours": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "relativeTimeDays": "{count, plural, =1{vor einem Tag} other{vor {count} Tagen}}",
+  "@relativeTimeDays": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "sensorLabelForecastAccuracy": "Prognosegenauigkeit",
+  "sensorLabelDewpoint": "Taupunkt",
+  "sensorLabelHeatIndex": "Hitzeindex",
+  "sensorLabelVoltage": "Spannung",
+  "sensorLabelWifi": "WLAN",
+  "sensorLabelAbsPressure": "Luftdruck (abs.)",
+  "sensorLabelFwVersion": "FW Version",
+  "sensorLabelCo2": "CO2",
+  "sensorLabelDust": "Feinstaub",
+  "sensorLabelBrightness": "Helligkeit",
+  "sensorLabelUvIndex": "UV-Index",
+  "deviceIconLabelHouse": "Haus",
+  "deviceIconLabelPool": "Pool",
+  "deviceIconLabelGarden": "Garten",
+  "deviceIconLabelBalcony": "Balkon",
+  "deviceIconLabelRoof": "Dach",
+  "deviceIconLabelGarage": "Garage",
+  "deviceIconLabelCabin": "Hütte",
+  "deviceIconLabelGeneral": "Allgemein"
 }

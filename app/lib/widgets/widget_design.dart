@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../l10n/generated/app_localizations.dart';
 import '../models/models.dart';
 import 'weather_utils.dart';
 
@@ -100,7 +101,7 @@ class WeatherWidgetDesign extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: selectedMetrics.map((key) => _buildMetricRow(key)).toList(),
+                  children: selectedMetrics.map((key) => _buildMetricRow(key, AppLocalizations.of(context)!)).toList(),
                 ),
               ),
             ],
@@ -110,8 +111,8 @@ class WeatherWidgetDesign extends StatelessWidget {
     );
   }
 
-  Widget _buildMetricRow(String key) {
-    final info = WeatherUtils.sensorInfo(key);
+  Widget _buildMetricRow(String key, AppLocalizations l10n) {
+    final info = WeatherUtils.sensorInfo(key, l10n);
     final unit = WeatherUtils.sensorUnit(key);
     double value = 0;
     

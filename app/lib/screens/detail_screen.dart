@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../l10n/generated/app_localizations.dart';
 import '../models/models.dart';
 import '../services/services.dart';
 import '../widgets/widgets.dart';
@@ -18,25 +19,16 @@ class DetailScreen extends StatefulWidget {
 }
 
 class _DetailScreenState extends State<DetailScreen> {
-  List<MeasurementPoint> _history = [];
   bool _loadingHistory = false;
   String? _historyError;
   int _selectedHours = 24;
-  late final ApiService _api;
   late Device _device;
 
   @override
   void initState() {
     super.initState();
     _device = widget.device;
-    _api = ApiService();
     _loadHistory();
-  }
-
-  @override
-  void dispose() {
-    _api.dispose();
-    super.dispose();
   }
 
   Future<void> _loadHistory() async {
@@ -45,30 +37,12 @@ class _DetailScreenState extends State<DetailScreen> {
       _historyError = null;
     });
     try {
-      final auth = context.read<AuthService>();
-      if (!auth.isLoggedIn) {
-        setState(() {
-          _loadingHistory = false;
-          _history = [];
-        });
-        return;
-      }
-      
-      final result = await _api.fetchHistory(
-        _device,
-        hours: _selectedHours,
-        bearerToken: auth.currentUser?.token,
-      );
-      
-      if (result.error != null) {
-        setState(() => _historyError = result.error);
-      } else {
-        setState(() => _history = result.data ?? []);
-      }
+      final provider = context.read<DeviceProvider>();
+      await provider.loadFullHistory(_device.id, hours: _selectedHours);
     } catch (e) {
-      setState(() => _historyError = 'Fehler beim Laden des Verlaufs');
+      setState(() => _historyError = e.toString().replaceFirst('Exception: ', ''));
     } finally {
-      setState(() => _loadingHistory = false);
+      if (mounted) setState(() => _loadingHistory = false);
     }
   }
 
@@ -76,6 +50,7 @@ class _DetailScreenState extends State<DetailScreen> {
   Widget build(BuildContext context) {
     final provider = context.watch<DeviceProvider>();
     final measurement = provider.measurementFor(_device.id);
+    final history = provider.historyFor(_device.id);
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -140,7 +115,7 @@ class _DetailScreenState extends State<DetailScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Verlauf',
+                          AppLocalizations.of(context)!.history,
                           style: theme.textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
@@ -155,10 +130,10 @@ class _DetailScreenState extends State<DetailScreen> {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    _buildHistorySection(theme),
+                    _buildHistorySection(theme, history),
                     const SizedBox(height: 32),
                     _DeviceInfo(device: _device),
-                    const SizedBox(height: 40),
+                    SizedBox(height: 40 + MediaQuery.of(context).padding.bottom),
                   ],
                 ),
               ),
@@ -169,7 +144,7 @@ class _DetailScreenState extends State<DetailScreen> {
     );
   }
 
-  Widget _buildHistorySection(ThemeData theme) {
+  Widget _buildHistorySection(ThemeData theme, List<MeasurementPoint> history) {
     if (_loadingHistory) {
       return const Center(
         child: Padding(
@@ -185,7 +160,7 @@ class _DetailScreenState extends State<DetailScreen> {
       );
     }
 
-    if (_history.isEmpty) {
+    if (history.isEmpty) {
       final auth = context.read<AuthService>();
       if (!auth.isLoggedIn) {
         return _LoginHint(
@@ -212,18 +187,18 @@ class _DetailScreenState extends State<DetailScreen> {
           title: 'Temperatur Aussen (°C)',
           height: 200,
           child: MetricChart(
-            points: _history,
+            points: history,
             color: Colors.orange,
             getValue: (p) => p.temperature,
           ),
         ),
-        if (_history.any((p) => p.poolTemperature != null)) ...[
+        if (history.any((p) => p.poolTemperature != null)) ...[
           const SizedBox(height: 16),
           _ChartContainer(
             title: 'Temperatur Wasser (°C)',
             height: 200,
             child: MetricChart(
-              points: _history.where((p) => p.poolTemperature != null).toList(),
+              points: history.where((p) => p.poolTemperature != null).toList(),
               color: Colors.blue,
               getValue: (p) => p.poolTemperature!,
             ),
@@ -234,7 +209,7 @@ class _DetailScreenState extends State<DetailScreen> {
           title: 'Luftfeuchtigkeit (%)',
           height: 200,
           child: MetricChart(
-            points: _history,
+            points: history,
             color: Colors.teal,
             getValue: (p) => p.humidity,
             intValues: true,
@@ -245,7 +220,7 @@ class _DetailScreenState extends State<DetailScreen> {
           title: 'Luftdruck (hPa)',
           height: 200,
           child: MetricChart(
-            points: _history,
+            points: history,
             color: Colors.indigo,
             getValue: (p) => p.relPressure,
             intValues: true,
@@ -256,7 +231,7 @@ class _DetailScreenState extends State<DetailScreen> {
           title: 'Batterie (%)',
           height: 180,
           child: MetricChart(
-            points: _history,
+            points: history,
             color: Colors.green,
             getValue: (p) => p.batteryPct.toDouble(),
             intValues: true,
@@ -267,7 +242,7 @@ class _DetailScreenState extends State<DetailScreen> {
           title: 'WLAN-Stärke (dBm)',
           height: 180,
           child: MetricChart(
-            points: _history,
+            points: history,
             color: Colors.blueGrey,
             getValue: (p) => p.extraSensors['wifi_strength'] ?? 0,
             intValues: true,
@@ -298,6 +273,7 @@ class _CurrentDataCard extends StatelessWidget {
   Widget build(BuildContext context) {
     if (measurement == null) return const SizedBox.shrink();
     final m = measurement!;
+    final l10n = AppLocalizations.of(context)!;
 
     return Card(
       child: Padding(
@@ -309,19 +285,19 @@ class _CurrentDataCard extends StatelessWidget {
               children: [
                 _StatusItem(
                   icon: Icons.thermostat,
-                  label: 'Temperatur',
+                  label: l10n.temperature,
                   value: '${m.temperature.toStringAsFixed(1)}°C',
                   color: Colors.orange,
                 ),
                 _StatusItem(
                   icon: Icons.water_drop,
-                  label: 'Feuchte',
+                  label: l10n.humidity,
                   value: '${m.humidity.toStringAsFixed(0)}%',
                   color: Colors.blue,
                 ),
                 _StatusItem(
                   icon: Icons.compress,
-                  label: 'Luftdruck',
+                  label: l10n.pressure,
                   value: '${m.relPressure.toStringAsFixed(0)}',
                   color: Colors.purple,
                 ),
@@ -329,26 +305,26 @@ class _CurrentDataCard extends StatelessWidget {
             ),
             const Divider(height: 32),
             _InfoRow(
-              label: 'Vorhersage', 
+              label: l10n.forecast,
               value: m.zambretti, 
               icon: Icons.wb_sunny,
               isWeather: true,
             ),
             _InfoRow(
-              label: 'Drucktrend', 
+              label: l10n.pressureTrend,
               value: m.trend, 
               icon: Icons.trending_up,
               isTrend: true,
             ),
             _InfoRow(
-              label: 'Batterie', 
+              label: l10n.battery,
               value: '${m.batteryPct}% (${m.batteryVolt.toStringAsFixed(2)}V)', 
               icon: Icons.battery_charging_full
             ),
             if (m.extraSensors.isNotEmpty) ...[
               const Divider(height: 32),
               ...m.extraSensors.entries.map((e) {
-                final info = WeatherUtils.sensorInfo(e.key);
+                final info = WeatherUtils.sensorInfo(e.key, AppLocalizations.of(context)!);
                 return _InfoRow(
                   label: info.$2,
                   value: '${e.value.toStringAsFixed(0)}${WeatherUtils.sensorUnit(e.key)}',
@@ -547,7 +523,7 @@ class _DeviceInfo extends StatelessWidget {
       color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
       child: ListTile(
         leading: const Icon(Icons.info_outline),
-        title: const Text('API Konfiguration'),
+        title: Text(AppLocalizations.of(context)!.apiConfiguration),
         subtitle: Text(device.apiUrl, style: const TextStyle(fontSize: 10)),
       ),
     );
@@ -560,6 +536,7 @@ class _LoginHint extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -567,18 +544,18 @@ class _LoginHint extends StatelessWidget {
           children: [
             const Icon(Icons.lock_person_outlined, size: 48, color: Colors.grey),
             const SizedBox(height: 16),
-            const Text(
-              'Historie geschützt',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Text(
+              l10n.historyProtected,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Um den Verlauf zu sehen, musst du dich anmelden.',
+            Text(
+              l10n.loginToSeeHistory,
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey),
+              style: const TextStyle(color: Colors.grey),
             ),
             const SizedBox(height: 24),
-            FilledButton(onPressed: onLogin, child: const Text('Jetzt anmelden')),
+            FilledButton(onPressed: onLogin, child: Text(l10n.loginNow)),
           ],
         ),
       ),

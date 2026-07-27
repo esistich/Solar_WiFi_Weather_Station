@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/generated/app_localizations.dart';
 
 /// Hilfsfunktionen fuer Wetter-Icons, Farben, Gradienten und Zeitformatierung.
 abstract final class WeatherUtils {
@@ -84,42 +85,52 @@ abstract final class WeatherUtils {
   }
 
   static Color batteryColor(int pct) {
-	if (pct >= 60) return const Color(0xFF66BB6A); // gruen
-	if (pct >= 30) return const Color(0xFFFFA726); // orange
-	return const Color(0xFFEF5350);                // rot
+    if (pct >= 60) return const Color(0xFF66BB6A); // gruen
+    if (pct >= 30) return const Color(0xFFFFA726); // orange
+    return const Color(0xFFEF5350);                // rot
   }
 
-  static String relativeTime(int ageSeconds) {
-	if (ageSeconds < 60) return 'gerade eben';
-	if (ageSeconds < 3600) {
-	  final min = (ageSeconds / 60).round();
-	  return 'vor $min Min.';
-	}
-	if (ageSeconds < 86400) {
-	  final h = (ageSeconds / 3600).round();
-	  return 'vor $h Std.';
-	}
-	final d = (ageSeconds / 86400).round();
-	return 'vor $d Tag${d > 1 ? 'en' : ''}';
+  static String relativeTime(int ageSeconds, AppLocalizations l10n) {
+    if (ageSeconds < 60) return l10n.relativeTimeJustNow;
+    if (ageSeconds < 3600) {
+      final min = (ageSeconds / 60).round();
+      return l10n.relativeTimeMinutes(min);
+    }
+    if (ageSeconds < 86400) {
+      final h = (ageSeconds / 3600).round();
+      return l10n.relativeTimeHours(h);
+    }
+    final d = (ageSeconds / 86400).round();
+    return l10n.relativeTimeDays(d);
   }
 
   static const List<IconData> deviceIcons = [
-	Icons.home_rounded,         // 0 Haus
-	Icons.pool_rounded,         // 1 Pool
-	Icons.yard_rounded,         // 2 Garten
-	Icons.balcony_rounded,      // 3 Balkon
-	Icons.roofing_rounded,      // 4 Dach
-	Icons.garage_rounded,       // 5 Garage
-	Icons.cabin_rounded,        // 6 Hütte
-	Icons.wb_cloudy_rounded,    // 7 Allgemein
-  ];
-
-  static const List<String> deviceIconLabels = [
-	'Haus', 'Pool', 'Garten', 'Balkon', 'Dach', 'Garage', 'Hütte', 'Allgemein',
+    Icons.home_rounded,         // 0 Haus
+    Icons.pool_rounded,         // 1 Pool
+    Icons.yard_rounded,         // 2 Garten
+    Icons.balcony_rounded,      // 3 Balkon
+    Icons.roofing_rounded,      // 4 Dach
+    Icons.garage_rounded,       // 5 Garage
+    Icons.cabin_rounded,        // 6 Hütte
+    Icons.wb_cloudy_rounded,    // 7 Allgemein
   ];
 
   static IconData deviceIcon(int index) =>
-	  deviceIcons[index.clamp(0, deviceIcons.length - 1)];
+      deviceIcons[index.clamp(0, deviceIcons.length - 1)];
+
+  static String deviceIconLabel(int index, AppLocalizations l10n) {
+    final labels = [
+      l10n.deviceIconLabelHouse,
+      l10n.deviceIconLabelPool,
+      l10n.deviceIconLabelGarden,
+      l10n.deviceIconLabelBalcony,
+      l10n.deviceIconLabelRoof,
+      l10n.deviceIconLabelGarage,
+      l10n.deviceIconLabelCabin,
+      l10n.deviceIconLabelGeneral,
+    ];
+    return labels[index.clamp(0, labels.length - 1)];
+  }
 
   // ── Icon-Farben ─────────────────────────────────────────────────────────────
 
@@ -160,22 +171,22 @@ abstract final class WeatherUtils {
   // ── Extra Sensoren & Übersetzung ───────────────────────────────────────────
 
   /// Liefert Icon und Label basierend auf dem metric_key.
-  static (IconData, String) sensorInfo(String key) {
+  static (IconData, String) sensorInfo(String key, AppLocalizations l10n) {
     final k = key.toLowerCase();
     
-    if (k == 'accuracy_pct') return (Icons.analytics_outlined, 'Prognosegenauigkeit');
-    if (k == 'dewpoint' || k == 'dewpointspread') return (Icons.water_drop_outlined, 'Taupunkt');
-    if (k == 'heat_index' || k == 'heatindex') return (Icons.hot_tub_rounded, 'Hitzeindex');
-    if (k == 'battery_volt') return (Icons.electric_bolt_rounded, 'Spannung');
-    if (k == 'wifi_strength' || k == 'wifistrength') return (Icons.wifi_rounded, 'WLAN');
-    if (k == 'abs_pressure') return (Icons.compress_rounded, 'Luftdruck (abs.)');
-    if (k == 'fw_version') return (Icons.system_update_alt_rounded, 'FW Version');
+    if (k == 'accuracy_pct') return (Icons.analytics_outlined, l10n.sensorLabelForecastAccuracy);
+    if (k == 'dewpoint' || k == 'dewpointspread') return (Icons.water_drop_outlined, l10n.sensorLabelDewpoint);
+    if (k == 'heat_index' || k == 'heatindex') return (Icons.hot_tub_rounded, l10n.sensorLabelHeatIndex);
+    if (k == 'battery_volt') return (Icons.electric_bolt_rounded, l10n.sensorLabelVoltage);
+    if (k == 'wifi_strength' || k == 'wifistrength') return (Icons.wifi_rounded, l10n.sensorLabelWifi);
+    if (k == 'abs_pressure') return (Icons.compress_rounded, l10n.sensorLabelAbsPressure);
+    if (k == 'fw_version') return (Icons.system_update_alt_rounded, l10n.sensorLabelFwVersion);
     
     // Dynamische Erkennung für andere Sensoren
-    if (k.contains('co2')) return (Icons.co2_rounded, 'CO2');
-    if (k.contains('pm2') || k.contains('aqi')) return (Icons.air_rounded, 'Feinstaub');
-    if (k.contains('lux') || k.contains('hell')) return (Icons.light_mode_rounded, 'Helligkeit');
-    if (k.contains('uv')) return (Icons.wb_sunny_rounded, 'UV-Index');
+    if (k.contains('co2')) return (Icons.co2_rounded, l10n.sensorLabelCo2);
+    if (k.contains('pm2') || k.contains('aqi')) return (Icons.air_rounded, l10n.sensorLabelDust);
+    if (k.contains('lux') || k.contains('hell')) return (Icons.light_mode_rounded, l10n.sensorLabelBrightness);
+    if (k.contains('uv')) return (Icons.wb_sunny_rounded, l10n.sensorLabelUvIndex);
     
     return (Icons.sensors_rounded, key.toUpperCase().replaceAll('_', ' '));
   }

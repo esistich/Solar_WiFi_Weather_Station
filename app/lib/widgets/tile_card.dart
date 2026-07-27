@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../l10n/generated/app_localizations.dart';
 import '../models/models.dart';
 import '../services/device_provider.dart';
 import 'weather_utils.dart';
@@ -80,9 +81,9 @@ class TileCard extends StatelessWidget {
               else if (measurement != null)
                 _DataSection(measurement: measurement, sparkline: sparkline)
               else if (!loading)
-                const Text(
-                  'Keine Daten verfügbar',
-                  style: TextStyle(color: Colors.white70),
+                Text(
+                  AppLocalizations.of(context)!.noDataAvailable,
+                  style: const TextStyle(color: Colors.white70),
                 ),
             ],
           ),
@@ -109,9 +110,10 @@ class _CardHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final ageSeconds = measurement?.dataAgeSeconds;
     final relTime =
-        ageSeconds != null ? WeatherUtils.relativeTime(ageSeconds) : null;
+        ageSeconds != null ? WeatherUtils.relativeTime(ageSeconds, l10n) : null;
     final zambretti = measurement?.zambretti ?? '';
     final weatherIcon = WeatherUtils.iconForZambretti(zambretti);
     final deviceIcon = WeatherUtils.deviceIcon(device.iconIndex);
@@ -243,7 +245,7 @@ class _DataSection extends StatelessWidget {
                     const Icon(Icons.pool, color: Colors.white70, size: 14),
                     const SizedBox(width: 6),
                     Text(
-                      '${measurement.poolTemperature!.toStringAsFixed(1)} °C Pool',
+                      '${measurement.poolTemperature!.toStringAsFixed(1)} °C ${AppLocalizations.of(context)!.pool}',
                       style: const TextStyle(color: Colors.white70, fontSize: 14),
                     ),
                   ],

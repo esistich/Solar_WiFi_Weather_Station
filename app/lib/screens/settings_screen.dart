@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../l10n/generated/app_localizations.dart';
 import '../models/models.dart';
 import '../services/services.dart';
 import '../widgets/weather_utils.dart';
@@ -14,10 +15,11 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Einstellungen'),
+        title: Text(l10n.settings),
         centerTitle: true,
       ),
       body: ListView(
@@ -26,7 +28,7 @@ class SettingsScreen extends StatelessWidget {
           _AccountHeader(),
           
           const SizedBox(height: 16),
-          _SectionTitle(title: 'Geräteverwaltung'),
+          _SectionTitle(title: l10n.deviceManagement),
           
           Consumer<DeviceProvider>(
             builder: (context, provider, _) {
@@ -37,7 +39,7 @@ class SettingsScreen extends StatelessWidget {
           
           _SettingsTile(
             icon: Icons.add_circle_outline_rounded,
-            title: 'Neue Station hinzufügen',
+            title: l10n.addNewStation,
             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DeviceSetupScreen())),
             color: colorScheme.primary,
           ),
@@ -49,9 +51,9 @@ class SettingsScreen extends StatelessWidget {
           Consumer<DeviceProvider>(
             builder: (context, provider, _) {
               if (provider.activeWidgetIds.isEmpty) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                  child: Text('Keine aktiven Widgets auf dem Homescreen gefunden.', style: TextStyle(fontSize: 12, color: Colors.grey, fontStyle: FontStyle.italic)),
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                  child: Text(l10n.noActiveWidgets, style: const TextStyle(fontSize: 12, color: Colors.grey, fontStyle: FontStyle.italic)),
                 );
               }
               return Column(
@@ -62,13 +64,13 @@ class SettingsScreen extends StatelessWidget {
 
           const Padding(padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8), child: Divider(height: 1)),
 
-          _SectionTitle(title: 'App & Darstellung'),
+          _SectionTitle(title: l10n.appAppearance),
           
           Consumer<ThemeProvider>(
             builder: (context, themeProvider, _) => _SettingsSwitchTile(
               icon: themeProvider.isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
-              title: 'Dunkles Design',
-              subtitle: 'Schont die Augen bei Nacht',
+              title: l10n.darkMode,
+              subtitle: l10n.darkModeSubtitle,
               value: themeProvider.isDark,
               onChanged: (_) => themeProvider.toggle(),
             ),
@@ -76,7 +78,7 @@ class SettingsScreen extends StatelessWidget {
 
           _SettingsTile(
             icon: Icons.info_outline_rounded,
-            title: 'Über diese App',
+            title: l10n.aboutApp,
             subtitle: 'SWS Companion v1.0.0',
             onTap: () => _showAboutDialog(context),
           ),
@@ -147,7 +149,7 @@ class _WidgetConfigCard extends StatelessWidget {
               spacing: 8,
               children: availableMetrics.map((key) {
                 final isSelected = selectedMetrics.contains(key);
-                final info = WeatherUtils.sensorInfo(key);
+                final info = WeatherUtils.sensorInfo(key, AppLocalizations.of(context)!);
                 return FilterChip(
                   label: Text(info.$2, style: const TextStyle(fontSize: 12)),
                   selected: isSelected,
@@ -171,6 +173,7 @@ class _AccountHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final auth = context.watch<AuthService>();
+    final l10n = AppLocalizations.of(context)!;
     final isLoggedIn = auth.currentUser != null;
 
     return Container(
@@ -189,13 +192,13 @@ class _AccountHeader extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(isLoggedIn ? 'Willkommen zurück' : 'Nicht angemeldet', style: theme.textTheme.labelMedium?.copyWith(color: theme.colorScheme.primary)),
-                Text(isLoggedIn ? auth.currentUser!.email : 'Für Cloud-Features einloggen', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
+                Text(isLoggedIn ? l10n.welcomeBack : l10n.notLoggedIn, style: theme.textTheme.labelMedium?.copyWith(color: theme.colorScheme.primary)),
+                Text(isLoggedIn ? auth.currentUser!.email : l10n.loginForCloudFeatures, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
               ],
             ),
           ),
           if (isLoggedIn) IconButton(onPressed: () => auth.logout(), icon: const Icon(Icons.logout_rounded))
-          else FilledButton(onPressed: () => _showAuthBottomSheet(context, auth), child: const Text('Login')),
+          else FilledButton(onPressed: () => _showAuthBottomSheet(context, auth), child: Text(l10n.login)),
         ],
       ),
     );
